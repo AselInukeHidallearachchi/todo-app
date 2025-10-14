@@ -1,3 +1,4 @@
 /api/vendor/
 /api/node_modules/
 /api/storage/*.key
+.DS_Store

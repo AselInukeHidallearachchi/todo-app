@@ -45,7 +45,7 @@ export default function TaskListPage() {
           {tasks.map((t) => (
             <li
               key={t.id}
-              className="p-3 bg-white shadow rounded flex justify-between"
+              className="p-3 shadow rounded flex justify-between border border-white"
             >
               <div>
                 <h2 className="font-semibold">{t.title}</h2>

@@ -28,7 +28,7 @@ export default function NewtaskPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+    <div className="max-w-md mx-auto mt-10 p-6  shadow rounded">
       <h1 className="text-xl font-bold mb-3">New Task</h1>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-3">
