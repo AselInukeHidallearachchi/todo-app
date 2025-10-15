@@ -3,69 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\{RegisterRequest, LoginRequest};
-use App\Models\User;
+use App\Handlers\AuthHandler;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
     /**
-     * Handle user registration
-     * Creates a new user and returns a Sanctum API token
+     * Authentication request handler instance
      */
-    public function register(RegisterRequest $req) {
-        // Create a new user with hashed password
-        $u = User::create([
-            'name' => $req->name,
-            'email' => $req->email,
-            'password' => Hash::make($req->password),
-        ]);
+    protected AuthHandler $authHandler;
 
-        // Generate a new personal access token for API authentication
-        $token = $u->createToken('api')->plainTextToken;
-
-        // Return user details and token as JSON response
-        return response()->json(['user' => $u, 'token' => $token], 201);
+    /**
+     * Initialize controller with auth handler dependency
+     */
+    public function __construct(AuthHandler $authHandler)
+    {
+        $this->authHandler = $authHandler;
     }
 
     /**
-     * Handle user login
+     * Register a new user
+     * Creates a new user account and returns a Sanctum API token
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        return $this->authHandler->handleRegister($request);
+    }
+
+    /**
+     * Authenticate user
      * Validates credentials and returns a new Sanctum token if successful
      */
-    public function login(LoginRequest $req) {
-        // Find user by email
-        $u = User::where('email', $req->email)->first();
-
-        // Check if user exists and password matches
-        if (!$u || !Hash::check($req->password, $u->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
-        }
-
-        // Generate a new token for the authenticated user
-        $token = $u->createToken('api')->plainTextToken;
-
-        // Return user info and token
-        return response()->json(['user' => $u, 'token' => $token]);
+    public function login(LoginRequest $request): JsonResponse
+    {
+        return $this->authHandler->handleLogin($request);
     }
 
     /**
-     * Get the currently authenticated user
+     * Get authenticated user profile
      * Requires valid Sanctum token in Authorization header
      */
-    public function me(Request $req) {
-        // Return the authenticated user (automatically resolved by Sanctum)
-        return response()->json(['user' => $req->user()]);
+    public function me(Request $request): JsonResponse
+    {
+        return $this->authHandler->handleGetUser($request->user());
     }
 
     /**
-     * Logout the currently authenticated user
-     * Deletes the current access token only
+     * Invalidate current session
+     * Deletes the current access token while preserving other sessions
      */
-    public function logout(Request $req) {
-        // Delete only the token used in this request (not all tokens)
-        $req->user()->currentAccessToken()->delete();
-
-        // Send logout confirmation message
-        return response()->json(['message' => 'Logged out']);
+    public function logout(Request $request): JsonResponse
+    {
+        return $this->authHandler->handleLogout($request->user());
     }
 }

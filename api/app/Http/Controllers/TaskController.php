@@ -1,63 +1,67 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Handlers\TaskHandler;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use App\Http\Requests\CreateTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
 
 class TaskController extends Controller
 {
-    // List only the current user's tasks
-    public function index(Request $r)
+    /**
+     * Task request handler instance
+     */
+    protected TaskHandler $taskHandler;
+
+    /**
+     * Initialize controller with task handler dependency
+     */
+    public function __construct(TaskHandler $taskHandler)
     {
-        $user = $r->user();
-        
-        // If admin, show all tasks. Otherwise, only user's tasks
-        if ($user->isAdmin()) {
-            return response()->json(Task::with('user')->latest()->get());
-        }
-        
-        return response()->json(
-            Task::where('user_id', $user->id)->latest()->get()
-        );
+        $this->taskHandler = $taskHandler;
     }
 
-    public function store(Request $r)
+    /**
+     * List tasks based on user's role
+     * If user is admin, shows all tasks, otherwise shows only user's tasks
+     */
+    public function index(Request $request): JsonResponse
     {
-        $data = $r->validate([
-            'title' => 'required|string|max:120',
-            'description' => 'nullable|string',
-            'status' => 'in:todo,in_progress,done',
-        ]);
-
-        $task = new Task($data);
-        $task->user()->associate($r->user());
-        $task->save();
-
-        return response()->json($task, 201);
+        return $this->taskHandler->handleGetTasks($request->user());
     }
 
-    public function show(Request $r, Task $task)
+    /**
+     * Create a new task for the authenticated user
+     */
+    public function store(CreateTaskRequest $request): JsonResponse
     {
-        return response()->json($task);
+        return $this->taskHandler->handleCreateTask( $request);
     }
 
-    public function update(Request $r, Task $task)
+    /**
+     * Display details of a specific task
+     */
+    public function show(Request $request, Task $task): JsonResponse
     {
-        $data = $r->validate([
-            'title' => 'sometimes|string|max:120',
-            'description' => 'nullable|string',
-            'status' => 'sometimes|in:todo,in_progress,done',
-        ]);
-        
-        $task->fill($data)->save();
-        return response()->json($task);
+        return $this->taskHandler->handleGetTask($task->id);
     }
 
-    public function destroy(Request $r, Task $task)
+    /**
+     * Update an existing task
+     */
+    public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
-        $task->delete();
-        return response()->json(['message'=>'Deleted successfully']);
+        return $this->taskHandler->handleUpdateTask($request, $task->id);
+    }
+
+    /**
+     * Remove a task from the system
+     */
+    public function destroy(Request $request, Task $task): JsonResponse
+    {
+        return $this->taskHandler->handleDeleteTask($task->id);
     }
 }
