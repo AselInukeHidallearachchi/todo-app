@@ -49,19 +49,6 @@ class TaskService
     {
         $task = Task::findOrFail($taskId);
 
-         // map frontend status values to DB enum values
-            if (isset($data['status'])) {
-                $map = [
-                    'pending'   => 'todo',
-                    'todo'      => 'todo',
-                    'in_progress' => 'in_progress',
-                    'completed' => 'done',
-                    'done'      => 'done',
-                ];
-
-                $data['status'] = $map[$data['status']] ?? $data['status'];
-            }
-
         $task->fill($data)->save();
         
         return $task;

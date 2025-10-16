@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { STATUS_LABELS } from "@/lib/constants";
 
 interface Task {
   id: number;
@@ -50,6 +51,11 @@ export default function TaskListPage() {
               <div>
                 <h2 className="font-semibold">{t.title}</h2>
                 <p className="text-sm text-gray-600">{t.description}</p>
+                <p className="text-xs text-gray-500">
+                  Status:{" "}
+                  {STATUS_LABELS[t.status as keyof typeof STATUS_LABELS] ??
+                    t.status}
+                </p>{" "}
               </div>
               <button
                 className="text-blue-600 hover:underline"

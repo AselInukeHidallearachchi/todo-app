@@ -2,36 +2,67 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
+import { STATUS_LABELS } from "@/lib/constants";
 
 export default function EditTaskPage() {
   const router = useRouter();
   const params = useParams();
   const [form, setForm] = useState({ title: "", description: "", status: "" });
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     api
       .get(`/tasks/${params.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setForm(res.data))
       .catch(() => router.push("/login"));
-  }, [params.id]);
+  }, [params.id, router]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => setForm({ ...form, [e.target.name]: e.target.value });
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    setErrors({});
+  };
 
   const handleSave = async () => {
     const token = localStorage.getItem("token");
-    await api.put(`/tasks/${params.id}`, form, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    router.push("/tasks");
+    if (!token) return router.push("/login");
+
+    try {
+      const res = await api.put(`/tasks/${params.id}`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Updated:", res.data);
+      router.push("/tasks");
+    } catch (err: any) {
+      if (err.response?.status === 422) {
+        console.log("API validation error:", err.response.data);
+        setErrors(err.response.data.errors || {});
+      } else {
+        console.error("Update failed:", err);
+        alert("Something went wrong. Please try again.");
+      }
+    }
   };
 
   const handleDelete = async () => {
     const token = localStorage.getItem("token");
+    if (!token) return router.push("/login");
+
     await api.delete(`/tasks/${params.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -47,22 +78,34 @@ export default function EditTaskPage() {
         onChange={handleChange}
         className="w-full border p-2 rounded mb-2"
       />
+      {errors.title && (
+        <p className="text-red-500 text-sm mb-2">{errors.title[0]}</p>
+      )}
       <textarea
         name="description"
         value={form.description}
         onChange={handleChange}
         className="w-full border p-2 rounded mb-2"
       />
+      {errors.description && (
+        <p className="text-red-500 text-sm mb-2">{errors.description[0]}</p>
+      )}
       <select
         name="status"
         value={form.status}
         onChange={handleChange}
         className="w-full border p-2 rounded mb-3"
       >
-        <option value="pending">Pending</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
+        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
       </select>
+      {errors.status && (
+        <p className="text-red-500 text-sm mb-2">{errors.status[0]}</p>
+      )}
+
       <div className="flex justify-between">
         <button
           onClick={handleSave}
