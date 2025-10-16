@@ -2,12 +2,18 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
-import { STATUS_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
 
 export default function EditTaskPage() {
   const router = useRouter();
   const params = useParams();
-  const [form, setForm] = useState({ title: "", description: "", status: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    status: "",
+    priority: "",
+    due_date: "",
+  });
   const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
 
   useEffect(() => {
@@ -20,7 +26,16 @@ export default function EditTaskPage() {
       .get(`/tasks/${params.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => setForm(res.data))
+      .then((res) => {
+        // Format the date to ISO string and slice to remove seconds/timezone
+        const formattedData = {
+          ...res.data,
+          due_date: res.data.due_date
+            ? new Date(res.data.due_date).toISOString().slice(0, 16)
+            : "",
+        };
+        setForm(formattedData);
+      })
       .catch(() => router.push("/login"));
   }, [params.id, router]);
 
@@ -39,13 +54,27 @@ export default function EditTaskPage() {
     if (!token) return router.push("/login");
 
     try {
-      const res = await api.put(`/tasks/${params.id}`, form, {
+      const formData = {
+        ...form,
+        due_date: form.due_date || null,
+      };
+
+      console.log("Sending dat to the backend:", {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        due_date: formData.due_date,
+      });
+
+      const res = await api.put(`/tasks/${params.id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
           "Content-Type": "application/json",
         },
       });
+
       console.log("Updated:", res.data);
       router.push("/tasks");
     } catch (err: any) {
@@ -97,13 +126,39 @@ export default function EditTaskPage() {
         className="w-full border p-2 rounded mb-3"
       >
         {Object.entries(STATUS_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
+          <option key={value} value={label}>
+            {value}
           </option>
         ))}
       </select>
       {errors.status && (
         <p className="text-red-500 text-sm mb-2">{errors.status[0]}</p>
+      )}
+      <select
+        name="priority"
+        value={form.priority}
+        onChange={handleChange}
+        className="w-full border p-2 rounded mb-3"
+      >
+        {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+          <option key={value} value={label}>
+            {value}
+          </option>
+        ))}
+      </select>
+      {errors.priority && (
+        <p className="text-red-500 text-sm mb-2">{errors.priority[0]}</p>
+      )}
+      {/* Add Due Date Input */}
+      <input
+        type="datetime-local"
+        name="due_date"
+        value={form.due_date || ""}
+        onChange={handleChange}
+        className="w-full border p-2 rounded mb-3"
+      />
+      {errors.due_date && (
+        <p className="text-red-500 text-sm mb-2">{errors.due_date[0]}</p>
       )}
 
       <div className="flex justify-between">

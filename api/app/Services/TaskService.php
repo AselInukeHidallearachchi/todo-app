@@ -11,15 +11,28 @@ class TaskService
      * Get tasks based on user's role
      * Admin sees all tasks, regular users see only their tasks
      */
-    public function getAllTasks(User $user)
+    public function getAllTasks(User $user, array $filters=[])
     {
-        if ($user->isAdmin()) {
-            return Task::with('user')->latest()->get();
+        $query = Task::query();
+
+        //Admin see all tasks, users only their own
+        if(!$user->isAdmin()){
+            $query->where('user_id',$user->id);
+        }
+
+        if(!empty($filters['status'])) {
+            $query->where('status',$filters['status']);
         }
         
-        return Task::where('user_id', $user->id)
-                  ->latest()
-                  ->get();
+         if (!empty($filters['priority'])) {
+            $query->where('priority', $filters['priority']);
+        }
+
+        if (!empty($filters['due_date'])) {
+            $query->whereDate('due_date', $filters['due_date']);
+        }
+
+        return $query->orderBy('due_date', 'asc')->get();
     }
 
     /**
@@ -27,11 +40,12 @@ class TaskService
      */
     public function createTask(array $data, User $user): Task
     {
-        $task = new Task($data);
-        $task->user()->associate($user);
-        $task->save();
-        
-        return $task;
+         // Default values for missing fields
+        $data['user_id'] = $user->id;
+        $data['status'] = $data['status'] ?? 'todo';
+        $data['priority'] = $data['priority'] ?? 'medium';
+
+        return Task::create($data);
     }
 
     /**
@@ -48,9 +62,7 @@ class TaskService
     public function updateTask(array $data, int $taskId): Task
     {
         $task = Task::findOrFail($taskId);
-
-        $task->fill($data)->save();
-        
+        $task->update($data);
         return $task;
     }
 
@@ -59,6 +71,7 @@ class TaskService
      */
     public function deleteTask(int $taskId): bool
     {
-        return Task::findOrFail($taskId)->delete();
+         $task = Task::findOrFail($taskId);
+        $task->delete();
     }
 }

@@ -48,4 +48,10 @@ class AuthHandler
     {
         return response()->json(['user' => $user]);
     }
+    public function handleGetTasks($user, array $filters = []): JsonResponse
+{
+    $tasks = $this->taskService->getAllTasks($user, $filters);
+    return response()->json($tasks);
+}
+
 }

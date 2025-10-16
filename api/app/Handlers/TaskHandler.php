@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Handlers;
-
+use App\Models\Task;
 use App\Services\TaskService;
 use App\Http\Requests\{CreateTaskRequest, UpdateTaskRequest};
 use Illuminate\Http\JsonResponse;
@@ -23,7 +23,14 @@ class TaskHandler
 
     public function handleCreateTask(CreateTaskRequest $request): JsonResponse
     {
-        $task = $this->taskService->createTask($request->validated(), $request->user());
+        $validated = $request->validated();
+        $validated['user_id'] = $request->user()->id;
+        $validated['status'] = $validated['status'] ?? 'todo';
+        $validated['priority'] = $validated['priority'] ?? 'medium';
+        $validated['due_date'] = $validated['due_date'] ?? null;
+
+        $task = $this->taskService->createTask($validated, $request->user());
+        
         return response()->json($task, 201);
     }
 

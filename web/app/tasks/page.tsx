@@ -9,6 +9,9 @@ interface Task {
   title: string;
   description: string;
   status: string;
+  priority: string;
+  due_date: string | null;
+  user_id: number;
 }
 
 export default function TaskListPage() {

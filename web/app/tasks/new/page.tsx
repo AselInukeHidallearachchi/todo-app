@@ -3,10 +3,17 @@
 import { useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { STATUS_LABELS } from "@/lib/constants";
 
 export default function NewtaskPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ title: "", description: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    status: STATUS_LABELS.TODO,
+    priority: "",
+    due_date: "",
+  });
   const [error, setError] = useState("");
 
   const handleChange = (
@@ -15,11 +22,22 @@ export default function NewtaskPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) return router.push("/login");
 
     try {
-      const token = localStorage.getItem("token");
-      await api.post("/tasks", form, {
-        headers: { Authorization: `Bearer ${token}` },
+      const formData = {
+        ...form,
+        due_date: form.due_date || null,
+        status: form.status || "todo",
+        priority: form.priority || "medium",
+      };
+
+      await api.post("/tasks", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       router.push("/tasks");
     } catch (err: any) {
