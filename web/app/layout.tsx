@@ -1,5 +1,6 @@
 /* eslint-disable */
 import Navbar from "./components/Navbar";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 /* eslint-enable */
 import { ReactNode } from "react";
@@ -13,10 +14,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 container mx-auto p-4">{children}</main>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col bg-background text-foreground">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar />
+          <main className="flex-1 container mx-auto p-4">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );
