@@ -15,7 +15,7 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col bg-background text-foreground">
+      <body className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

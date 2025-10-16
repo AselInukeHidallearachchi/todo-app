@@ -91,8 +91,8 @@ export default function EditTaskPage() {
   const handleDelete = async () => {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
-
-    await api.delete(`/tasks/${params.id}`, {
+    console.log("params id", params);
+    await api.delete(`/tasks/${params.id}/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     router.push("/tasks");

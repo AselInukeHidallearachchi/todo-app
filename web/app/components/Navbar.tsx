@@ -1,4 +1,6 @@
 "use client";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -11,13 +13,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="shadow p-4 flex justify-between">
-      <Link href="/tasks" className="font-bold text-lg">
-        Todo App
-      </Link>
-      <button onClick={handleLogout} className="text-red-600 hover:underline">
-        Logout
-      </button>
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center justify-between">
+        <Link href="/tasks" className="font-bold text-lg p-3">
+          Todo App
+        </Link>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </div>
+      </div>
     </nav>
   );
 }

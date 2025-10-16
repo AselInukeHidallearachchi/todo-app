@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { STATUS_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
 
 interface Task {
   id: number;
@@ -35,12 +36,12 @@ export default function TaskListPage() {
     <div className="max-w-2xl mx-auto mt-10">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">My Tasks</h1>
-        <button
+        <Button
           onClick={() => router.push("/tasks/new")}
           className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           + Add Task
-        </button>
+        </Button>
       </div>
       {tasks.length === 0 ? (
         <p>No tasks yet.</p>
@@ -58,6 +59,12 @@ export default function TaskListPage() {
                   Status:{" "}
                   {STATUS_LABELS[t.status as keyof typeof STATUS_LABELS] ??
                     t.status}
+                </p>{" "}
+                <p className="text-xs text-gray-500">
+                  Priority:{" "}
+                  {PRIORITY_LABELS[
+                    t.priority as keyof typeof PRIORITY_LABELS
+                  ] ?? t.priority}
                 </p>{" "}
               </div>
               <button

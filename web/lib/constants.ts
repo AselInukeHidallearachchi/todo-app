@@ -1,6 +1,6 @@
 export const STATUS_LABELS = {
   TODO: "todo",
-  IN_PROGRESS: "in_progress",
+  "IN PROGRESS": "in_progress",
   COMPLETED: "completed",
 } as const;
 
