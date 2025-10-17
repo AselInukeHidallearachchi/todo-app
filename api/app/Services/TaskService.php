@@ -32,7 +32,7 @@ class TaskService
             $query->whereDate('due_date', $filters['due_date']);
         }
 
-        return $query->orderBy('due_date', 'asc')->get();
+        return $query->orderBy('due_date', 'asc')->get(); //tasks ordering change based on date 
     }
 
     /**

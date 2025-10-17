@@ -13,6 +13,8 @@ class AuthService
     public function register(array $data): array
     {
         $data['password'] = Hash::make($data['password']);
+        $data['role'] = $data['role'] ?? 'user';  // Default role
+        $data['is_active'] = true;  // New users active by default
         $user = User::create($data);
         $token = $user->createToken('api')->plainTextToken;
 

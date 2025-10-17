@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 /* eslint-enable */
 import { ReactNode } from "react";
+import { UserProvider } from "@/context/UserContext";
 
 export const metadata = {
   title: "Todo App",
@@ -22,7 +23,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
+          <UserProvider>
+            <Navbar />
+          </UserProvider>
           <main className="flex-1 container mx-auto p-4">{children}</main>
         </ThemeProvider>
       </body>

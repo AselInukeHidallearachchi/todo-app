@@ -15,6 +15,13 @@ class EnsureAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        return $next($request);
+       $user = $request->user();
+
+    if (!$user || !$user->isAdmin()) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    return $next($request);
     }
 }
+
