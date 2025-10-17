@@ -71,7 +71,7 @@ class TaskService
      */
     public function deleteTask(int $taskId): bool
     {
-         $task = Task::findOrFail($taskId);
-        $task->delete();
+        $task = Task::findOrFail($taskId);
+        return $task->delete();
     }
 }
