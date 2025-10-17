@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "@/lib/api";
-import { useRouter } from "next/navigation";
 
 interface User {
   id: number;
@@ -14,22 +13,23 @@ interface User {
 interface UserContextType {
   user: User | null;
   loading: boolean;
-  refreshUser: () => Promise<void>;
+  clearUser: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
-  refreshUser: async () => {},
+  clearUser: () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
+    setLoading(true);
     const token = localStorage.getItem("token");
+
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -40,13 +40,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const response = await api.get("/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUser(response.data);
-    } catch {
+      setUser(response.data.user || response.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
       setUser(null);
-      router.push("/login");
+      localStorage.removeItem("token");
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearUser = () => {
+    setUser(null);
+    localStorage.removeItem("token");
   };
 
   useEffect(() => {
@@ -54,7 +60,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, refreshUser: fetchUser }}>
+    <UserContext.Provider value={{ user, loading, clearUser }}>
       {children}
     </UserContext.Provider>
   );

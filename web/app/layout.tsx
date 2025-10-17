@@ -25,8 +25,8 @@ export default function RootLayout({
         >
           <UserProvider>
             <Navbar />
+            <main className="flex-1 container mx-auto p-4">{children}</main>
           </UserProvider>
-          <main className="flex-1 container mx-auto p-4">{children}</main>
         </ThemeProvider>
       </body>
     </html>
