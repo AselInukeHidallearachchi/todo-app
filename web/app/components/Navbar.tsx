@@ -21,15 +21,6 @@ export default function Navbar() {
   const router = useRouter();
   const { user, loading, clearUser } = useUser();
 
-  useEffect(() => {
-    console.log("Navbar mounted/updated");
-    console.log("Current user state:", user);
-    console.log("Loading state:", loading);
-  }, [user, loading]);
-
-  console.log("user", user);
-  console.log("loading", loading);
-
   const handleLogout = async () => {
     clearUser();
     router.replace("/login");

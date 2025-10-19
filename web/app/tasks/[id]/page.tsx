@@ -59,14 +59,6 @@ export default function EditTaskPage() {
         due_date: form.due_date || null,
       };
 
-      console.log("Sending dat to the backend:", {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        due_date: formData.due_date,
-      });
-
       const res = await api.put(`/tasks/${params.id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -75,14 +67,14 @@ export default function EditTaskPage() {
         },
       });
 
-      console.log("Updated:", res.data);
+      //console.log("Updated:", res.data);
       router.push("/tasks");
     } catch (err: any) {
       if (err.response?.status === 422) {
-        console.log("API validation error:", err.response.data);
+        //console.log("API validation error:", err.response.data);
         setErrors(err.response.data.errors || {});
       } else {
-        console.error("Update failed:", err);
+        //console.error("Update failed:", err);
         alert("Something went wrong. Please try again.");
       }
     }
