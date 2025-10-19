@@ -14,53 +14,37 @@ interface UserContextType {
   user: User | null;
   loading: boolean;
   clearUser: () => void;
+  setUser: (user: User) => void;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
   clearUser: () => {},
+  setUser: () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
-    setLoading(true);
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await api.get("/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(response.data.user || response.data);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      setUser(null);
-      localStorage.removeItem("token");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const clearUser = () => {
     setUser(null);
     localStorage.removeItem("token");
   };
 
+  // Check for existing token and user data on mount
   useEffect(() => {
-    fetchUser();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, clearUser }}>
+    <UserContext.Provider value={{ user, loading, clearUser, setUser }}>
       {children}
     </UserContext.Provider>
   );

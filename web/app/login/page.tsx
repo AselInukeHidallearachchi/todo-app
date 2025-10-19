@@ -1,10 +1,13 @@
 "use client";
+
 import { useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -16,6 +19,8 @@ export default function LoginPage() {
     try {
       const res = await api.post("/auth/login", form);
       localStorage.setItem("token", res.data.token);
+      // Set user data directly from login response
+      setUser(res.data.user);
       router.push("/tasks");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
@@ -23,7 +28,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6  shadow rounded-xl">
+    <div className="max-w-md mx-auto mt-20 p-6 shadow rounded-xl">
       <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-3">
