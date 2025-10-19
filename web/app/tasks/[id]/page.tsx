@@ -1,171 +1,460 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Save,
+  Trash2,
+  Edit,
+} from "lucide-react";
 
-export default function EditTaskPage() {
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  user_id: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export default function TaskDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    status: "",
-    priority: "",
-    due_date: "",
-  });
-  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
+  const taskId = params.id as string;
+
+  const [task, setTask] = useState<Task | null>(null);
+  const [form, setForm] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
+    fetchTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchTask = async () => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    api
-      .get(`/tasks/${params.id}`, {
+    if (!token) return router.push("/login");
+
+    try {
+      const res = await api.get(`/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        // Format the date to ISO string and slice to remove seconds/timezone
-        const formattedData = {
-          ...res.data,
-          due_date: res.data.due_date
-            ? new Date(res.data.due_date).toISOString().slice(0, 16)
-            : "",
-        };
-        setForm(formattedData);
-      })
-      .catch(() => router.push("/login"));
-  }, [params.id, router]);
+      });
+      const data = res.data as Task;
+      setTask(data);
+      setForm(data);
+    } catch {
+      setError("Failed to load task");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    setErrors({});
+    if (form) {
+      setForm({ ...form, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleDateChange = (date: string) => {
+    if (form) {
+      setForm({ ...form, due_date: date });
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (form) {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSave = async () => {
+    if (!form) return;
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
 
     try {
       const formData = {
-        ...form,
+        title: form.title.trim(),
+        description: form.description.trim(),
         due_date: form.due_date || null,
+        status: form.status,
+        priority: form.priority,
       };
 
-      const res = await api.put(`/tasks/${params.id}`, formData, {
+      await api.put(`/tasks/${taskId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: "application/json",
           "Content-Type": "application/json",
         },
       });
 
-      //console.log("Updated:", res.data);
-      router.push("/tasks");
-    } catch (err: any) {
-      if (err.response?.status === 422) {
-        //console.log("API validation error:", err.response.data);
-        setErrors(err.response.data.errors || {});
-      } else {
-        //console.error("Update failed:", err);
-        alert("Something went wrong. Please try again.");
-      }
+      setTask(form);
+      setIsEditing(false);
+      setSuccess("Task updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || "Failed to save task");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
-    console.log("params id", params);
-    await api.delete(`/tasks/${params.id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    router.push("/tasks");
+
+    try {
+      await api.delete(`/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      router.push("/tasks");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || "Failed to delete task");
+    }
   };
 
-  return (
-    <div className="max-w-md mx-auto mt-10 p-6  border border-white shadow rounded">
-      <h1 className="text-xl font-bold mb-3">Edit Task</h1>
-      <input
-        name="title"
-        value={form.title}
-        onChange={handleChange}
-        className="w-full border p-2 rounded mb-2"
-      />
-      {errors.title && (
-        <p className="text-red-500 text-sm mb-2">{errors.title[0]}</p>
-      )}
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        className="w-full border p-2 rounded mb-2"
-      />
-      {errors.description && (
-        <p className="text-red-500 text-sm mb-2">{errors.description[0]}</p>
-      )}
-      <select
-        name="status"
-        value={form.status}
-        onChange={handleChange}
-        className="w-full border p-2 rounded mb-3"
-      >
-        {Object.entries(STATUS_LABELS).map(([value, label]) => (
-          <option key={value} value={label}>
-            {value}
-          </option>
-        ))}
-      </select>
-      {errors.status && (
-        <p className="text-red-500 text-sm mb-2">{errors.status[0]}</p>
-      )}
-      <select
-        name="priority"
-        value={form.priority}
-        onChange={handleChange}
-        className="w-full border p-2 rounded mb-3"
-      >
-        {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-          <option key={value} value={label}>
-            {value}
-          </option>
-        ))}
-      </select>
-      {errors.priority && (
-        <p className="text-red-500 text-sm mb-2">{errors.priority[0]}</p>
-      )}
-      {/* Add Due Date Input */}
-      <input
-        type="datetime-local"
-        name="due_date"
-        value={form.due_date || ""}
-        onChange={handleChange}
-        className="w-full border p-2 rounded mb-3"
-      />
-      {errors.due_date && (
-        <p className="text-red-500 text-sm mb-2">{errors.due_date[0]}</p>
-      )}
+  const handleCancel = () => {
+    setForm(task);
+    setIsEditing(false);
+    setError("");
+  };
 
-      <div className="flex justify-between">
-        <button
-          onClick={handleSave}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Save
-        </button>
-        <button
-          onClick={handleDelete}
-          className="bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Delete
-        </button>
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="relative h-10 w-10 mb-4">
+          <div className="absolute inset-0 rounded-full border-4 border-muted"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+        <p className="text-sm text-muted-foreground">Loading task...</p>
+      </div>
+    );
+  }
+
+  if (!task || !form) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Task Not Found</h2>
+          <p className="text-muted-foreground mb-4">
+            The task you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Button onClick={() => router.push("/tasks")}>Back to Tasks</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
+
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              {isEditing ? "Edit Task" : "Task Details"}
+            </h1>
+            {task.created_at && (
+              <p className="text-muted-foreground text-sm mt-2">
+                Created on{" "}
+                {new Date(task.created_at).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {!isEditing && (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="gap-2"
+                variant="outline"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            {isEditing && (
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              onClick={isEditing ? handleSave : () => handleDelete()}
+              className={
+                isEditing
+                  ? "gap-2"
+                  : "gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+              }
+              variant={isEditing ? "default" : "outline"}
+              disabled={saving}
+            >
+              {isEditing ? (
+                <>
+                  <Save className="h-4 w-4" />
+                  {saving ? "Saving..." : "Save"}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        {error && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
+            <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-success">{success}</p>
+          </div>
+        )}
+
+        <Card className="p-6 shadow-soft-lg">
+          {isEditing ? (
+            // Edit Form
+            <form className="space-y-6">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-semibold">
+                  Task Title *
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Enter task title"
+                  value={form.title}
+                  onChange={handleChange}
+                  className="h-10 text-base"
+                  disabled={saving}
+                  autoFocus
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-semibold">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Add task details here..."
+                  value={form.description}
+                  onChange={handleChange}
+                  className="min-h-[120px] text-base resize-none"
+                  disabled={saving}
+                />
+              </div>
+
+              {/* Priority and Status */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority" className="text-sm font-semibold">
+                    Priority
+                  </Label>
+                  <Select
+                    value={form.priority}
+                    onValueChange={(value) =>
+                      handleSelectChange("priority", value)
+                    }
+                    disabled={saving}
+                  >
+                    <SelectTrigger id="priority">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={PRIORITY_LABELS.LOW}>Low</SelectItem>
+                      <SelectItem value={PRIORITY_LABELS.MEDIUM}>
+                        Medium
+                      </SelectItem>
+                      <SelectItem value={PRIORITY_LABELS.HIGH}>High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-semibold">
+                    Status
+                  </Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      handleSelectChange("status", value)
+                    }
+                    disabled={saving}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={STATUS_LABELS.TODO}>To Do</SelectItem>
+                      <SelectItem value={STATUS_LABELS["IN PROGRESS"]}>
+                        In Progress
+                      </SelectItem>
+                      <SelectItem value={STATUS_LABELS.COMPLETED}>
+                        Completed
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Due Date */}
+              <div className="space-y-2">
+                <Label htmlFor="due_date" className="text-sm font-semibold">
+                  Due Date
+                </Label>
+                <DatePicker
+                  value={form.due_date || ""}
+                  onChange={handleDateChange}
+                  placeholder="Select a due date"
+                />
+              </div>
+            </form>
+          ) : (
+            // View Mode
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  {task.title}
+                </h2>
+                {task.description && (
+                  <p className="text-muted-foreground whitespace-pre-wrap">
+                    {task.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                      STATUS
+                    </p>
+                    <Badge variant="secondary">
+                      {task.status.replace("_", " ").toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                      PRIORITY
+                    </p>
+                    <Badge
+                      variant={
+                        task.priority === "urgent"
+                          ? "destructive"
+                          : task.priority === "high"
+                          ? "warning"
+                          : task.priority === "low"
+                          ? "success"
+                          : "secondary"
+                      }
+                    >
+                      {task.priority.toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  {task.due_date && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">
+                        DUE DATE
+                      </p>
+                      <Badge variant="outline">
+                        {new Date(task.due_date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {task.updated_at && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">
+                        LAST UPDATED
+                      </p>
+                      <p className="text-sm">
+                        {new Date(task.updated_at).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
