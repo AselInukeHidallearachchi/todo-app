@@ -372,7 +372,23 @@ export default function TaskDetailPage() {
                   value={form.due_date || ""}
                   onChange={handleDateChange}
                   placeholder="Select a due date"
+                  minDate={new Date().toISOString().split("T")[0]}
+                  className="w-full"
                 />
+                {/* Date text*/}
+                <p className="text-xs text-muted-foreground">
+                  {form.due_date
+                    ? `Due on ${new Date(form.due_date).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}`
+                    : "Optional"}
+                </p>
               </div>
             </form>
           ) : (
