@@ -44,12 +44,11 @@ export default function LoginPage() {
 
     try {
       const res = await api.post("/auth/login", form);
-      const data = res.data as {
+      const { token, user } = res.data as {
         token: string;
         user: { id: number; name: string; email: string; role: string };
       };
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
+      setUser(user, token);
       router.push("/tasks");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
