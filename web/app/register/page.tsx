@@ -3,6 +3,7 @@
 import { useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ interface PasswordStrength {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -94,6 +96,7 @@ export default function RegisterPage() {
       const res = await api.post("/auth/register", form);
       const data = res.data as { token: string };
       localStorage.setItem("token", data.token);
+      setUser(data.user);
       router.push("/tasks");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
