@@ -38,7 +38,7 @@ export default function NewTaskPage() {
   ) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleDateChange = (date: string) => {
-    setForm({ ...form, due_date: date });
+    setForm((prev) => ({ ...prev, due_date: date }));
   };
 
   const handleSelectChange = (name: string, value: string) => {

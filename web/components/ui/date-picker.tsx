@@ -30,11 +30,17 @@ export function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedDate = value ? new Date(value) : undefined;
+  // Convert string date to Date object for the calendar
+  const selectedDate = value ? new Date(value + "T00:00:00") : undefined;
 
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
-    const dateString = date.toISOString().split("T")[0];
+
+    // Create date string in YYYY-MM-DD format
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
 
     if (minDate && dateString < minDate) return;
     if (maxDate && dateString > maxDate) return;
@@ -44,7 +50,11 @@ export function DatePicker({
   };
 
   const isDateDisabled = (date: Date) => {
-    const dateString = date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+
     if (minDate && dateString < minDate) return true;
     if (maxDate && dateString > maxDate) return true;
     return false;
