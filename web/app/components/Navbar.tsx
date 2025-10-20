@@ -69,7 +69,7 @@ export default function Navbar() {
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 shadow-soft">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 flex h-16 items-center justify-between">
         {/* Logo */}
         <Link
           href="/tasks"
@@ -83,27 +83,29 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center gap-1">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Home className="h-4 w-4" />
-              Dashboard
-            </Button>
-          </Link>
-          <Link href="/tasks">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <CheckSquare2 className="h-4 w-4" />
-              My Tasks
-            </Button>
-          </Link>
-          <Link href="/tasks/new">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
-          </Link>
-        </div>
+        {/* Navigation Links - Only shown when user is logged in */}
+        {userData && (
+          <div className="hidden md:flex items-center gap-1">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <Link href="/tasks">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <CheckSquare2 className="h-4 w-4" />
+                My Tasks
+              </Button>
+            </Link>
+            <Link href="/tasks/new">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Task
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
