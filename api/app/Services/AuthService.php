@@ -34,7 +34,7 @@ class AuthService
         if (!$user || !Hash::check($password, $user->password)) {
             return null;
         }
-
+        //Block inactive users at login
         if(!$user->is_active){
             throw new \Illuminate\Auth\AuthenticationException(
             'Your account has been deactivated. Please contact administrator.'
