@@ -35,6 +35,11 @@ class AuthService
             return null;
         }
 
+        if(!$user->is_active){
+            throw new \Illuminate\Auth\AuthenticationException(
+            'Your account has been deactivated. Please contact administrator.'
+        );
+        }
         $token = $user->createToken('api')->plainTextToken;
 
         return [

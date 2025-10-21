@@ -29,13 +29,17 @@ class AuthHandler
 
     public function handleLogin(LoginRequest $request): JsonResponse
     {
-        $result = $this->authService->login($request->email, $request->password);
+        try{
+            $result = $this->authService->login($request->email, $request->password);
 
         if (!$result) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         return response()->json($result);
+        }catch(\Illuminate\Auth\AuthenticationException $e){
+            return response()->json(['message'=>$e->getMessage()],403);
+        }
     }
 
     public function handleLogout($user): JsonResponse
