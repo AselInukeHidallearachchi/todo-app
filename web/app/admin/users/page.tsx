@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+
 import {
   AlertCircle,
   CheckCircle2,
@@ -37,16 +39,12 @@ export default function AdminUsersPage() {
   }, []);
 
   const fetchUsers = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return router.push("/login");
-
     setLoading(true);
     setError("");
 
     try {
-      const res = await api.get("/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/users");
+
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err: unknown) {
       const error = err as {
@@ -64,21 +62,13 @@ export default function AdminUsersPage() {
   }, [router]);
 
   const toggleRole = async (user: User) => {
-    const token = localStorage.getItem("token");
     const newRole = user.role === "admin" ? "user" : "admin";
-
     setUpdatingId(user.id);
     setError("");
     setSuccess("");
 
     try {
-      await api.patch(
-        `/v1/users/${user.id}/role`,
-        { role: newRole },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.patch(`/users/${user.id}/role`, { role: newRole });
       setUsers(
         users.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
       );
@@ -87,6 +77,24 @@ export default function AdminUsersPage() {
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || "Failed to update user role");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const toggleActive = async (user: User) => {
+    setUpdatingId(user.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await api.patch(`/users/${user.id}/toggle`);
+      setUsers(users.map((u) => (u.id === user.id ? res.data.user : u)));
+      setSuccess(res.data.message);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || "Failed to toggle user status");
     } finally {
       setUpdatingId(null);
     }
@@ -171,7 +179,7 @@ export default function AdminUsersPage() {
           <Card className="overflow-hidden shadow-soft-lg">
             {/* Table Header */}
             <div className="bg-card border-b border-border/50 px-6 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
                 <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                   User
                 </div>
@@ -197,7 +205,7 @@ export default function AdminUsersPage() {
                   key={user.id}
                   className="px-6 py-4 hover:bg-muted/30 transition-colors duration-200 group"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                  <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
                     {/* User Name */}
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0">
@@ -221,45 +229,41 @@ export default function AdminUsersPage() {
                     </div>
 
                     {/* Role Badge */}
-                    <div>
-                      <Badge
-                        variant={
-                          user.role === "admin" ? "destructive" : "outline"
-                        }
-                        className="gap-1 w-fit"
-                      >
-                        <Shield className="h-3 w-3" />
-                        {user.role === "admin" ? "Admin" : "User"}
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                      className={`gap-1 w-fit  ${
+                        user.role === "admin"
+                          ? "bg-destructive hover:bg-destructive/90"
+                          : " hover:bg-primary/90"
+                      }`}
+                    >
+                      <Shield className="h-3 w-3" />
+                      {user.role === "admin" ? "Admin" : "User"}
+                    </Badge>
 
-                    {/* Status - GREEN BUTTON */}
-                    <div>
-                      {user.is_active ? (
-                        <Button
-                          disabled
-                          variant="default"
-                          size="sm"
-                          className="gap-1 bg-success hover:bg-success/90 text-success-foreground"
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          Active
-                        </Button>
+                    <div className="flex items-center gap-2">
+                      {updatingId === user.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
-                        <Button
-                          disabled
-                          variant="outline"
-                          size="sm"
-                          className="gap-1 text-destructive border-destructive/30"
-                        >
-                          <AlertCircle className="h-3 w-3" />
-                          Inactive
-                        </Button>
+                        <Switch
+                          checked={user.is_active}
+                          onCheckedChange={() => toggleActive(user)}
+                          disabled={updatingId === user.id}
+                        />
                       )}
+                      <span
+                        className={`text-sm font-medium ${
+                          user.is_active
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {user.is_active ? "Active" : "Inactive"}
+                      </span>
                     </div>
 
                     {/* Action Button */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-left">
                       <Button
                         onClick={() => toggleRole(user)}
                         disabled={updatingId === user.id}

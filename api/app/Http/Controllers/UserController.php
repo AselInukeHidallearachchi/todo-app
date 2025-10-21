@@ -55,4 +55,24 @@ class UserController extends Controller
         $user->update($validated);
         return response()->json($user);
     }
+
+    public function toggleActive(Request $request, User $user)
+{
+    // Optional: Prevent admin from deactivating self
+    if ($user->id === $request->user()->id) {
+        return response()->json(['message' => 'You cannot deactivate your own account'], 403);
+    }
+
+    // Flip the boolean
+    $user->is_active = !$user->is_active;
+    $user->save();
+
+    return response()->json([
+        'message' => $user->is_active
+            ? "{$user->name} has been activated"
+            : "{$user->name} has been deactivated",
+        'user' => $user->refresh(),
+    ]);
+}
+
 }

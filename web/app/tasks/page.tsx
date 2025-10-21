@@ -18,9 +18,7 @@ export default function TaskListPage() {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
     try {
-      const res = await api.get("/tasks", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/tasks");
       setTasks(Array.isArray(res.data) ? res.data : []);
     } finally {
       setLoading(false);
