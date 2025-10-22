@@ -56,4 +56,10 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function attachments()
+     {
+    return $this->hasMany(\App\Models\Attachment::class, 'uploaded_by');
+     }
+
 }

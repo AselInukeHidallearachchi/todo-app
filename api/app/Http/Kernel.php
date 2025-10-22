@@ -12,7 +12,8 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
-        \Illuminate\Http\Middleware\HandleCors::class,
+        // Global middleware
+        
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     ];
@@ -24,7 +25,13 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'api' => [
-            \Laravel\Sanctum\Sanctum::class,
+            // ensures CORS + cookies + session-based auth works
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            
+            // Optional rate limiting
+            'throttle:api',
+
+            // Required for model binding
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
