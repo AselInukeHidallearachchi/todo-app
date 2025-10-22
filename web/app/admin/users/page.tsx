@@ -215,9 +215,6 @@ export default function AdminUsersPage() {
                         <p className="font-medium text-foreground truncate">
                           {user.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          ID: {user.id}
-                        </p>
                       </div>
                     </div>
 
