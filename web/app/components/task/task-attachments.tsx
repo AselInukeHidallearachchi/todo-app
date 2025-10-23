@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Paperclip, X, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,23 +21,24 @@ export function TaskAttachments({
   isEditMode = false,
 }: TaskAttachmentsProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false); // UI state for drag feedback
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-
+  // Single helper used by BOTH input change and drop
+  const uploadFile = async (file: File) => {
     try {
       setIsUploading(true);
       setError("");
       setSuccess("");
-      const file = e.target.files[0];
+
       const attachment = await uploadTaskAttachment(task.id, file);
 
       onUpdate({
         ...task,
         attachments: [...(task.attachments || []), attachment],
       });
+
       setSuccess(`${file.name} uploaded successfully`);
     } catch (error: any) {
       setError("Failed to upload file. Please try again.");
@@ -43,6 +46,46 @@ export function TaskAttachments({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  //  Click-to-upload path (unchanged behavior, now reuses helper)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    await uploadFile(e.target.files[0]);
+    // clear the input so selecting the same file twice still fires onChange
+    e.target.value = "";
+  };
+
+  // Native drag & drop handlers (new)
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isUploading) setIsDragActive(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isUploading) setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    if (isUploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    // (Optional) add type/size checks here if you want parity with FileUpload
+    await uploadFile(file);
   };
 
   const handleFileDelete = async (
@@ -103,23 +146,49 @@ export function TaskAttachments({
         {isEditMode && (
           <div className="flex justify-center">
             <label
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-32",
-                "border-2 border-dashed rounded-lg",
-                "cursor-pointer hover:bg-muted/50 transition-colors",
-                isUploading && "pointer-events-none opacity-50"
+                "relative flex flex-col items-center justify-center w-full h-32",
+                "border-2 border-dashed rounded-lg transition-all duration-200 cursor-pointer",
+                isUploading && "pointer-events-none opacity-50",
+                isDragActive
+                  ? "border-primary bg-primary/10 scale-[1.01] shadow-sm"
+                  : "border-muted-foreground/30 hover:bg-muted/50"
               )}
             >
+              {/* overlay glow when dragging */}
+              {isDragActive && (
+                <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary/40 animate-in fade-in" />
+              )}
+
               <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">Click to upload</span> or drag
-                  and drop
-                </p>
-                <p className="text-xs text-muted-foreground/75 mt-1">
-                  PDF, Word, Excel (up to 10MB)
-                </p>
+                <Upload
+                  className={cn(
+                    "h-8 w-8 mb-2 transition-colors",
+                    isDragActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                />
+                {isDragActive ? (
+                  <p className="text-sm font-medium text-primary">
+                    Drop your file here…
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">Click to upload</span> or
+                      drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground/75 mt-1">
+                      PDF, Word, Excel (up to 10MB)
+                    </p>
+                  </>
+                )}
               </div>
+
+              {/* hidden input still handles click-to-upload */}
               <input
                 type="file"
                 className="hidden"

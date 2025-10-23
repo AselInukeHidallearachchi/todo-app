@@ -72,11 +72,12 @@ export function FileUpload({
       <div
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
+          "relative flex flex-col items-center justify-center w-full h-32 p-6",
+          "rounded-lg border-2 border-dashed cursor-pointer transition-all duration-200",
+          isUploading && "opacity-50 cursor-not-allowed pointer-events-none",
           isDragActive
-            ? "border-primary bg-secondary/50"
-            : "border-border hover:border-primary",
-          isUploading && "opacity-50 cursor-not-allowed"
+            ? "border-primary bg-primary/10 scale-[1.01] shadow-sm"
+            : "border-muted-foreground/30 bg-card hover:border-primary/50 hover:bg-muted/30"
         )}
       >
         <input {...getInputProps()} />
