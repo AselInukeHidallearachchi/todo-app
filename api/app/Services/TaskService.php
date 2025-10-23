@@ -8,12 +8,12 @@ use App\Models\User;
 class TaskService
 {
     /**
-     * Get tasks based on user's role
+     * Get tasks based on user's role with attachments
      * Admin sees all tasks, regular users see only their tasks
      */
     public function getAllTasks(User $user, array $filters=[])
     {
-        $query = Task::query();
+        $query = Task::with('attachments');
 
         //Admin see all tasks, users only their own
         if(!$user->isAdmin()){
@@ -49,11 +49,11 @@ class TaskService
     }
 
     /**
-     * Get a specific task by ID
+     * Get a specific task by ID with its attachments
      */
     public function getTask(int $taskId): Task
     {
-        return Task::findOrFail($taskId);
+        return Task::with('attachments.uploader')->findOrFail($taskId);
     }
 
     /**

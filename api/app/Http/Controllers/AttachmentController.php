@@ -15,67 +15,55 @@ class AttachmentController extends Controller
         return $task->attachments()->with('uploader:id,name')->latest()->get();
     }
 
-//upload one file      
-public function store(Request $request, Task $task)
-{
-    try {
-        info($request);
-        $request->validate([
-            'file' => [
-                'required',
-                'file',
-                'max:10240',
-                'mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt'
-            ]
-        ]);
-        
-        if (!$request->hasFile('file')) {
+    public function store(Request $request, Task $task)
+    {
+        try {
+            // Validate the request first
+            $validated = $request->validate([
+                'file' => [
+                    'required',
+                    'file',
+                    'max:10240',
+                    'mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt'
+                ]
+            ]);
+
+            $file = $request->file('file');
+
+            // Store the file
+            $path = $file->store('attachments', 'public');
+
+            if (!$path) {
+                \Log::error('Failed to store file: ' . $file->getClientOriginalName());
+                return response()->json([
+                    'message' => 'Failed to save file',
+                    'errors' => ['file' => ['Could not save file to storage.']]
+                ], 500);
+            }
+
+            // Create attachment record
+            $attachment = Attachment::create([
+                'task_id' => $task->id,
+                'uploaded_by' => auth()->id(),
+                'original_name' => $file->getClientOriginalName(),
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+            ]);
+
+            // Load the uploader relationship before returning
+            $attachment->load('uploader:id,name');
+
+            return response()->json($attachment, 201);
+
+        } catch (\Exception $e) {
+            \Log::error('File upload error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'No file uploaded',
-                'errors' => ['file' => ['No file was uploaded.']]
-            ], 422);
+                'message' => 'File upload failed',
+                'errors' => ['file' => [$e->getMessage()]]
+            ], 500);
         }
-
-        $file = $request->file('file');
-        $path = $file->store('attachments','public');
-        
-        if (!$file->isValid()) {
-            return response()->json([
-                'message' => 'Invalid file upload',
-                'errors' => ['file' => [$file->getErrorMessage()]]
-            ], 422);
-        }
-
-        // Make sure the storage directory exists and is writable
-        $storage = Storage::disk('public');
-        //$path = $storage->putFile('attachments', $file);
-
-        if (!$path) {
-            return response()->json([
-                'message' => 'Failed to save file',
-                'errors' => ['file' => ['Could not save file to storage.']]
-            ], 422);
-        }
-
-        $attachment = Attachment::create([
-            'task_id' => $task->id,
-            'uploaded_by' => $request->user()->id,
-            'original_name' => $file->getClientOriginalName(),
-            'path' => $path,
-            'mime_type' => $file->getClientMimeType(),
-            'size_bytes' => $file->getSize(),
-        ]);
-
-        return response()->json($attachment, 201);
-
-    } catch (\Exception $e) {
-        \Log::error('File upload error: ' . $e->getMessage());
-        return response()->json([
-            'message' => 'Upload failed',
-            'errors' => ['file' => [$e->getMessage()]]
-        ], 500);
     }
-}
 
 
     public function destroy(Task $task, Attachment $attachment)
