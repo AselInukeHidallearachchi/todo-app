@@ -10,6 +10,7 @@ import {
   ArrowUp,
   Eye,
   Trash2,
+  Paperclip,
 } from "lucide-react";
 import type { Task } from "@/types/task";
 
@@ -97,6 +98,13 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
               <Badge variant="outline" className="gap-1">
                 <Clock className="h-3 w-3" />
                 {new Date(task.due_date).toLocaleDateString()}
+              </Badge>
+            )}
+            {task.attachments && task.attachments.length > 0 && (
+              <Badge variant="outline" className="gap-1">
+                <Paperclip className="h-3 w-3" />
+                {task.attachments.length}{" "}
+                {task.attachments.length === 1 ? "file" : "files"}
               </Badge>
             )}
           </div>

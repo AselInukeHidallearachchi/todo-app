@@ -1,3 +1,15 @@
+export interface Attachment {
+  id: number;
+  task_id: number;
+  uploaded_by: number;
+  original_name: string;
+  path: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Task {
   id: number;
   title: string;
@@ -8,6 +20,7 @@ export interface Task {
   user_id: number;
   created_at?: string;
   updated_at?: string;
+  attachments?: Attachment[];
 }
 
 export type SortOption = "recent" | "priority" | "status" | "due-date";

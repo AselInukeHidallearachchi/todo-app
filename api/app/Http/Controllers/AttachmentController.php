@@ -19,11 +19,16 @@ class AttachmentController extends Controller
 public function store(Request $request, Task $task)
 {
     try {
-        
-        $request->validate([
-            'file' => 'required|max:10240|mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt',
-        ]);
         info($request);
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'max:10240',
+                'mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt'
+            ]
+        ]);
+        
         if (!$request->hasFile('file')) {
             return response()->json([
                 'message' => 'No file uploaded',
@@ -32,6 +37,7 @@ public function store(Request $request, Task $task)
         }
 
         $file = $request->file('file');
+        $path = $file->store('attachments','public');
         
         if (!$file->isValid()) {
             return response()->json([
@@ -42,7 +48,7 @@ public function store(Request $request, Task $task)
 
         // Make sure the storage directory exists and is writable
         $storage = Storage::disk('public');
-        $path = $storage->putFile('attachments', $file);
+        //$path = $storage->putFile('attachments', $file);
 
         if (!$path) {
             return response()->json([

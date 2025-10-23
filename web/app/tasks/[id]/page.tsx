@@ -25,19 +25,12 @@ import {
   Save,
   Trash2,
   Edit,
+  Paperclip,
 } from "lucide-react";
+import { TaskAttachments } from "@/app/components/task/task-attachments";
 
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  due_date: string | null;
-  user_id: number;
-  created_at?: string;
-  updated_at?: string;
-}
+import type { Task as TaskType } from "@/types/task";
+type Task = TaskType;
 
 export default function TaskDetailPage() {
   const router = useRouter();
@@ -375,7 +368,6 @@ export default function TaskDetailPage() {
                   minDate={new Date().toISOString().split("T")[0]}
                   className="w-full"
                 />
-                {/* Date text*/}
                 <p className="text-xs text-muted-foreground">
                   {form.due_date
                     ? `Due on ${new Date(form.due_date).toLocaleDateString(
@@ -390,6 +382,17 @@ export default function TaskDetailPage() {
                     : "Optional"}
                 </p>
               </div>
+
+              {/* Attachments Section */}
+              {!saving && (
+                <TaskAttachments
+                  task={form}
+                  onUpdate={(updatedTask) => {
+                    setForm(updatedTask);
+                    setTask(updatedTask);
+                  }}
+                />
+              )}
             </form>
           ) : (
             // View Mode
@@ -467,6 +470,17 @@ export default function TaskDetailPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Attachments Section in View Mode */}
+              <div className="pt-6 border-t border-border">
+                <TaskAttachments
+                  task={task}
+                  onUpdate={(updatedTask) => {
+                    setTask(updatedTask);
+                    setForm(updatedTask);
+                  }}
+                />
               </div>
             </div>
           )}
