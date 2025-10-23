@@ -386,11 +386,12 @@ export default function TaskDetailPage() {
               {/* Attachments Section */}
               {!saving && (
                 <TaskAttachments
-                  task={form}
+                  task={task}
                   onUpdate={(updatedTask) => {
-                    setForm(updatedTask);
                     setTask(updatedTask);
+                    setForm(updatedTask);
                   }}
+                  isEditMode={true}
                 />
               )}
             </form>
@@ -480,6 +481,7 @@ export default function TaskDetailPage() {
                     setTask(updatedTask);
                     setForm(updatedTask);
                   }}
+                  isEditMode={false}
                 />
               </div>
             </div>
