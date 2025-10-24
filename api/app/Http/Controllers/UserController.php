@@ -74,5 +74,42 @@ class UserController extends Controller
         'user' => $user->refresh(),
     ]);
 }
+public function getPreferences()
+{
+    $user = auth()->user();
+
+    // Get or create default preferences for this user
+    $preference = $user->preference ?? $user->preference()->create([
+        'daily_digest_enabled' => false,
+        'digest_time' => '06:00:00',
+    ]);
+
+    return response()->json([
+        'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
+        'digest_time' => substr($preference->digest_time, 0, 5), // HH:MM
+    ]);
+}
+
+public function updatePreferences(Request $request)
+{
+    $validated = $request->validate([
+        'daily_digest_enabled' => 'required|boolean',
+        'digest_time' => 'required|date_format:H:i',
+    ]);
+
+    $preference = auth()->user()->preference()->updateOrCreate(
+        ['user_id' => auth()->id()],
+        [
+            'daily_digest_enabled' => $validated['daily_digest_enabled'],
+            'digest_time' => $validated['digest_time'] . ':00',
+        ]
+    );
+
+    return response()->json([
+        'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
+        'digest_time' => substr($preference->digest_time, 0, 5),
+    ]);
+}
+
 
 }

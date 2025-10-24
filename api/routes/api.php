@@ -24,6 +24,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/tasks/{task}/attachments', [AttachmentController::class, 'store']);
             Route::delete('/tasks/{task}/attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
+            //Preferences routes
+            Route::get('/user/preferences',[UserController::class, 'getPreferences']);
+            Route::put('/user/preferences',[UserController::class, 'updatePreferences']);
+
             // Admin routes
             Route::middleware('admin')->group(function () {
                 Route::apiResource('users', UserController::class);

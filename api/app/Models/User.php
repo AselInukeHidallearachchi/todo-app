@@ -62,4 +62,14 @@ class User extends Authenticatable
     return $this->hasMany(\App\Models\Attachment::class, 'uploaded_by');
      }
 
+    public function preference()
+    {
+        return $this->hasOne(\App\Models\UserPreference::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(\App\Models\Task::class); 
+    }
+
 }
