@@ -21,6 +21,7 @@ import {
   Home,
   CheckSquare2,
   Plus,
+  Settings2,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -192,6 +193,14 @@ export default function Navbar() {
                   <span>Manage Users</span>
                 </DropdownMenuItem>
               )}
+
+              <DropdownMenuItem
+                onClick={() => router.push("/settings")}
+                className="cursor-pointer"
+              >
+                <Settings2 className="h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
