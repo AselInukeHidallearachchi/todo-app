@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import {
   AlertCircle,
@@ -89,8 +90,9 @@ export default function AdminUsersPage() {
 
     try {
       const res = await api.patch(`/users/${user.id}/toggle`);
-      setUsers(users.map((u) => (u.id === user.id ? res.data.user : u)));
-      setSuccess(res.data.message);
+      const data = res.data as { user: User; message: string };
+      setUsers(users.map((u) => (u.id === user.id ? data.user : u)));
+      setSuccess(data.message);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -150,18 +152,18 @@ export default function AdminUsersPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
-            <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-success">{success}</p>
-          </div>
+          <Alert variant="success" className="mb-6">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         )}
 
         {/* Users Table */}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,6 @@ import {
   Save,
   Trash2,
   Edit,
-  Paperclip,
 } from "lucide-react";
 import { TaskAttachments } from "@/app/components/task/task-attachments";
 
@@ -252,17 +252,17 @@ export default function TaskDetailPage() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
-            <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-success">{success}</p>
-          </div>
+          <Alert variant="success" className="mb-6">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         )}
 
         <Card className="p-6 shadow-soft-lg">

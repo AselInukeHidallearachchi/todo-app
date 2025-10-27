@@ -6,6 +6,7 @@ import { TaskHeader } from "./components/TaskHeader";
 import { TaskControls } from "./components/TaskControls";
 import { TaskCard } from "./components/TaskCard";
 import { EmptyState } from "./components/EmptyState";
+import type { Task } from "@/types/task";
 
 export default function TaskListPage() {
   const router = useRouter();

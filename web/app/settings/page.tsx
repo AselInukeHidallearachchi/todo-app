@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState({
@@ -14,27 +16,30 @@ export default function SettingsPage() {
     digest_time: "06:00",
   });
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await api.get("/user/preferences");
-        setPreferences(res.data);
+        setPreferences(res.data as typeof preferences);
       } catch {
-        setMsg("Failed to load preferences");
+        setMsg({ type: "error", text: "Failed to load preferences" });
       }
     })();
   }, []);
 
   const save = async () => {
     setSaving(true);
-    setMsg("");
+    setMsg(null);
     try {
       await api.put("/user/preferences", preferences);
-      setMsg("Saved!");
+      setMsg({ type: "success", text: "Saved!" });
     } catch {
-      setMsg("Save failed");
+      setMsg({ type: "error", text: "Save failed" });
     } finally {
       setSaving(false);
     }
@@ -44,7 +49,16 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Email Preferences</h1>
       <Card className="p-6 space-y-6">
-        {msg && <p className="text-sm opacity-80">{msg}</p>}
+        {msg && (
+          <Alert variant={msg.type === "error" ? "destructive" : "success"}>
+            {msg.type === "error" ? (
+              <AlertCircle className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            <AlertDescription>{msg.text}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex items-center justify-between">
           <div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Paperclip, X, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { uploadTaskAttachment, deleteTaskAttachment } from "@/lib/api";
 import type { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
@@ -36,11 +37,11 @@ export function TaskAttachments({
 
       onUpdate({
         ...task,
-        attachments: [...(task.attachments || []), attachment],
+        attachments: [...(task.attachments || []), attachment as never],
       });
 
       setSuccess(`${file.name} uploaded successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError("Failed to upload file. Please try again.");
       console.error(error);
     } finally {
@@ -130,17 +131,17 @@ export function TaskAttachments({
 
       <CardContent className="space-y-4">
         {error && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 animate-in slide-in-from-top duration-200">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-start gap-3 animate-in slide-in-from-top duration-200">
-            <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-emerald-600">{success}</p>
-          </div>
+          <Alert variant="success">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         )}
 
         {isEditMode && (

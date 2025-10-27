@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertCircle,
   Loader,
@@ -23,6 +24,13 @@ interface PasswordStrength {
   score: number;
   feedback: string;
   color: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
 }
 
 export default function RegisterPage() {
@@ -132,10 +140,10 @@ export default function RegisterPage() {
 
         <Card className="p-6 shadow-soft-xl border-border/40">
           {error && (
-            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 animate-slide-in-down">
-              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
