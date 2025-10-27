@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         'admin' => \App\Http\Middleware\EnsureAdmin::class,
     ]);
     })
+    ->withSchedule(function ($schedule) {
+        $schedule->command('tasks:send-digests')->everyMinute();
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

@@ -30,33 +30,38 @@ class SendTaskDigests extends Command
      */
     public function handle(): int
     {
+        info("Task digest command is executing");
         $now = Carbon::now(); // Uses APP_TIMEZONE (e.g. Asia/Colombo)
+
+        //logging the server time. 
+        info('current time'.$now);
+
         $windowStart = $now->copy()->subMinutes(2)->format('H:i:s');
         $windowEnd   = $now->copy()->addMinutes(2)->format('H:i:s');
 
         // Get users whose digest time falls within the 4-minute window
-        // $users = User::whereHas('preference', function ($q) use ($windowStart, $windowEnd) {
-        //     $q->where('daily_digest_enabled', true)
-        //       ->whereBetween('digest_time', [$windowStart, $windowEnd]);
-        // })->get();
+        $users = User::whereHas('preference', function ($q) use ($windowStart, $windowEnd) {
+            $q->where('daily_digest_enabled', true)
+              ->whereBetween('digest_time', [$windowStart, $windowEnd]);
+        })->get();
 
         /*
         // TESTING CODE (used to send to all enabled users regardless of time)
         // Commented out above and uncomment below for testing. 
         // */
         
-        $users = User::whereHas('preference', function ($q) {
-            $q->where('daily_digest_enabled', true);
-        })->get();
+        // $users = User::whereHas('preference', function ($q) {
+        //     $q->where('daily_digest_enabled', true);
+        // })->get();
         
 
         foreach ($users as $user) {
-            // Prevent double-send for the same day
-            $key = "digest:{$user->id}:" . today()->toDateString();
-            if (Cache::has($key)) {
-                $this->info("Skipped {$user->email} (already sent today)");
-                continue;
-            }
+            // Prevent double-send for the same day COMMENT TO TEST
+            // $key = "digest:{$user->id}:" . today()->toDateString();
+            // if (Cache::has($key)) {
+            //     $this->info("Skipped {$user->email} (already sent today)");
+            //     continue;
+            // }
 
             // Collect tasks
             $tasks = [
@@ -78,8 +83,8 @@ class SendTaskDigests extends Command
             // Send email
             Mail::to($user->email)->send(new DailyTaskDigest($user, $tasks));
 
-            // Mark as sent for the day
-            Cache::put($key, true, now()->endOfDay());
+            // Mark as sent for the day COMMENT TO TEST
+            //Cache::put($key, true, now()->endOfDay());
 
             $this->info("Sent digest to {$user->email}");
         }
