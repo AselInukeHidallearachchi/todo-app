@@ -25,6 +25,12 @@ class TaskService
         $query->where('status', $filters['status']);
     }
 
+    //Search filter 
+    if(!empty($filters['search'])){
+        $search = trim($filters['search']);
+        $query->where('title','like',"%{$search}%");
+    }
+
     // Sorting
     if (!empty($filters['sort'])) {
         switch ($filters['sort']) {

@@ -22,7 +22,8 @@ class TaskHandler
         try{
             $filters = [
             'status' => $request->query('status'),
-            'sort' => $request->query('sort')
+            'sort' => $request->query('sort'),
+            'search' => $request->query('search')
         ];
         $tasks = $this->taskService->getAllTasks($user,$filters);
         return response()->json($tasks);

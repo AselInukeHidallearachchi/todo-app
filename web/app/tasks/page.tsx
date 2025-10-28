@@ -6,7 +6,8 @@ import { TaskHeader } from "./components/TaskHeader";
 import { TaskControls } from "./components/TaskControls";
 import { TaskCard } from "./components/TaskCard";
 import { EmptyState } from "./components/EmptyState";
-import type { Task } from "@/types/task";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Task } from "@/types/task";
 
 export default function TaskListPage() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function TaskListPage() {
   const [loading, setLoading] = useState(true);
   const [filterBy, setFilterBy] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const fetchTasks = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -23,13 +27,18 @@ export default function TaskListPage() {
       if (filterBy !== "all") params.append("status", filterBy);
       if (sortBy === "priority") params.append("sort", "priority");
       if (sortBy === "due-date") params.append("sort", "due_date");
+      if (debouncedSearch && debouncedSearch.trim()) {
+        params.append("search", debouncedSearch.trim());
+      }
 
       const res = await api.get(`/tasks?${params.toString()}`);
       setTasks(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
     } finally {
       setLoading(false);
     }
-  }, [router, filterBy, sortBy]);
+  }, [router, filterBy, sortBy, debouncedSearch]);
 
   useEffect(() => {
     fetchTasks();
@@ -44,7 +53,7 @@ export default function TaskListPage() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
-  if (loading) {
+  if (loading && tasks.length === 0) {
     return (
       <div className="flex justify-center py-20 text-muted-foreground">
         Loading tasks...
@@ -58,8 +67,10 @@ export default function TaskListPage() {
       <TaskControls
         filterBy={filterBy}
         sortBy={sortBy}
+        searchQuery={searchQuery}
         onFilterChange={setFilterBy}
         onSortChange={setSortBy}
+        onSearchChange={setSearchQuery}
       />
       {tasks.length === 0 ? (
         <EmptyState filter={filterBy} />
