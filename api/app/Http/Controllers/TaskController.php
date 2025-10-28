@@ -30,8 +30,8 @@ class TaskController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['status', 'priority', 'due_date']);
-        return $this->taskHandler->handleGetTasks($request->user());
+        //$filters = $request->only(['status', 'priority', 'due_date']);
+        return $this->taskHandler->handleGetTasks($request,$request->user());
     }
 
     /**

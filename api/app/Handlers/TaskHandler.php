@@ -5,6 +5,8 @@ use App\Models\Task;
 use App\Services\TaskService;
 use App\Http\Requests\{CreateTaskRequest, UpdateTaskRequest};
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use App\Models\User;
 
 class TaskHandler
 {
@@ -15,10 +17,21 @@ class TaskHandler
         $this->taskService = $taskService;
     }
 
-    public function handleGetTasks($user): JsonResponse
+    public function handleGetTasks(Request $request, User $user): JsonResponse
     {
-        $tasks = $this->taskService->getAllTasks($user);
+        try{
+            $filters = [
+            'status' => $request->query('status'),
+            'sort' => $request->query('sort')
+        ];
+        $tasks = $this->taskService->getAllTasks($user,$filters);
         return response()->json($tasks);
+        }catch(\Exception $e){
+            return response()->json([
+            'message' => 'Error fetching tasks',
+            'error' => $e->getMessage()
+        ], 500);
+        }
     }
 
     public function handleCreateTask(CreateTaskRequest $request): JsonResponse

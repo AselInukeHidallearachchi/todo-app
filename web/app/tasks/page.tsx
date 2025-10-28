@@ -19,12 +19,17 @@ export default function TaskListPage() {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
     try {
-      const res = await api.get("/tasks");
+      const params = new URLSearchParams();
+      if (filterBy !== "all") params.append("status", filterBy);
+      if (sortBy === "priority") params.append("sort", "priority");
+      if (sortBy === "due-date") params.append("sort", "due_date");
+
+      const res = await api.get(`/tasks?${params.toString()}`);
       setTasks(Array.isArray(res.data) ? res.data : []);
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, filterBy, sortBy]);
 
   useEffect(() => {
     fetchTasks();
@@ -39,10 +44,6 @@ export default function TaskListPage() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const filtered = tasks.filter(
-    (t) => filterBy === "all" || t.status === filterBy
-  );
-
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-muted-foreground">
@@ -53,18 +54,18 @@ export default function TaskListPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <TaskHeader taskCount={filtered.length} />
+      <TaskHeader taskCount={tasks.length} />
       <TaskControls
         filterBy={filterBy}
         sortBy={sortBy}
         onFilterChange={setFilterBy}
         onSortChange={setSortBy}
       />
-      {filtered.length === 0 ? (
+      {tasks.length === 0 ? (
         <EmptyState filter={filterBy} />
       ) : (
         <div className="grid gap-3">
-          {filtered.map((task) => (
+          {tasks.map((task) => (
             <TaskCard key={task.id} task={task} onDelete={deleteTask} />
           ))}
         </div>

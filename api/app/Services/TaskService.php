@@ -12,28 +12,37 @@ class TaskService
      * Admin sees all tasks, regular users see only their tasks
      */
     public function getAllTasks(User $user, array $filters=[])
-    {
-        $query = Task::with('attachments');
+{
+    $query = Task::with('attachments');
 
-        //Admin see all tasks, users only their own
-        if(!$user->isAdmin()){
-            $query->where('user_id',$user->id);
-        }
-
-        if(!empty($filters['status'])) {
-            $query->where('status',$filters['status']);
-        }
-        
-         if (!empty($filters['priority'])) {
-            $query->where('priority', $filters['priority']);
-        }
-
-        if (!empty($filters['due_date'])) {
-            $query->whereDate('due_date', $filters['due_date']);
-        }
-
-        return $query->orderBy('due_date', 'asc')->get(); //tasks ordering change based on date 
+    // Base filters
+    if (!$user->isAdmin()) {
+        $query->where('user_id', $user->id);
     }
+
+    // Status filter
+    if (!empty($filters['status'])) {
+        $query->where('status', $filters['status']);
+    }
+
+    // Sorting
+    if (!empty($filters['sort'])) {
+        switch ($filters['sort']) {
+            case 'priority':
+                $query->orderByRaw("FIELD(priority, 'urgent', 'high', 'medium', 'low')");
+                break;
+            case 'due_date':
+                $query->orderBy('due_date', 'asc');
+                break;
+            default:
+                $query->latest(); // Default sort by created_at desc
+        }
+    } else {
+        $query->latest(); // Default sort
+    }
+
+    return $query->get();
+}
 
     /**
      * Create a new task for a user
