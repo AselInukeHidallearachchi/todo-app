@@ -50,7 +50,7 @@ export default function LoginPage() {
         user: { id: number; name: string; email: string; role: string };
       };
       setUser(user, token);
-      router.push("/tasks");
+      router.push("/");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(

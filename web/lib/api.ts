@@ -61,4 +61,13 @@ export const deleteTaskAttachment = async (
   });
 };
 
+// Fetch task statistics for the logged-in user
+export const fetchTaskStatistics = async () => {
+  const token = localStorage.getItem("token");
+  const response = await api.get("/tasks-statistics", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export default api;

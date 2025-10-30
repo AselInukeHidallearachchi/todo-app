@@ -65,4 +65,12 @@ class TaskController extends Controller
     {
         return $this->taskHandler->handleDeleteTask($task->id);
     }
+
+    /**
+     * Get task statistics for authenticated user
+     */
+    public function statistics(Request $request): JsonResponse
+    {
+        return $this->taskHandler->handleGetStatistics($request->user());
+    }
 }

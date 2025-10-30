@@ -104,7 +104,7 @@ export default function RegisterPage() {
       const res = await api.post("/auth/register", form);
       const { token, user } = res.data as { token: string; user: User };
       setUser(user, token);
-      router.push("/tasks");
+      router.push("/");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(

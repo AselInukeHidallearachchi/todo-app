@@ -18,6 +18,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/auth/me', [AuthController::class, 'me']);
             Route::post('/auth/logout', [AuthController::class, 'logout']);
             Route::apiResource('tasks', TaskController::class);
+            Route::get('/tasks-statistics', [TaskController::class, 'statistics']);
 
             //Attachment routes 
             Route::get('/tasks/{task}/attachments', [AttachmentController::class, 'index']);

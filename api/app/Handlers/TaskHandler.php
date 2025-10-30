@@ -75,4 +75,17 @@ class TaskHandler
         $this->taskService->deleteTask($taskId);
         return response()->json(['message' => 'Deleted successfully']);
     }
+
+    public function handleGetStatistics(User $user):JsonResponse
+    {
+        try{
+            $stats = $this->taskService->getTaskStatistics($user);
+            return response()->json($stats);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Error fetching statistics',
+                'error' => $e->getMessage(),
+            ],500);
+        }
+    }
 }

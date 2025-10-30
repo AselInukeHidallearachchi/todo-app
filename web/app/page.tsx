@@ -16,33 +16,59 @@ import {
   Trophy,
   Sparkles,
 } from "lucide-react";
+import { fetchTaskStatistics } from "@/lib/api";
+
+interface TaskStats {
+  total: number;
+  completed: number;
+  in_progress: number;
+  pending: number;
+}
 
 export default function Home() {
   const router = useRouter();
   const { user } = useUser();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<TaskStats>({
     total: 0,
     completed: 0,
-    inProgress: 0,
+    in_progress: 0,
     pending: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
-    } else {
-      // Simulate fetching stats
-      setTimeout(() => {
-        setStats({
-          total: 12,
-          completed: 5,
-          inProgress: 4,
-          pending: 3,
-        });
-        setLoading(false);
-      }, 300);
+      return;
     }
+
+    const loadStatistics = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchTaskStatistics();
+        setStats({
+          total: data.total || 0,
+          completed: data.completed || 0,
+          in_progress: data.in_progress || 0,
+          pending: data.pending || 0,
+        });
+      } catch (err) {
+        console.error("Error loading statistics:", err);
+        setError("Failed to load statistics");
+        // Set default stats on error
+        setStats({
+          total: 0,
+          completed: 0,
+          in_progress: 0,
+          pending: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStatistics();
   }, [user, router]);
 
   if (!user || loading) {
@@ -52,11 +78,31 @@ export default function Home() {
           <div className="inline-block p-4 rounded-full bg-primary/10 mb-4">
             <Sparkles className="h-8 w-8 text-primary animate-spin" />
           </div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-6 max-w-md">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              Error Loading Dashboard
+            </h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const completionRate =
+    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -132,7 +178,7 @@ export default function Home() {
               <p className="text-muted-foreground text-sm font-medium">
                 In Progress
               </p>
-              <p className="text-3xl font-bold mt-2">{stats.inProgress}</p>
+              <p className="text-3xl font-bold mt-2">{stats.in_progress}</p>
             </div>
             <div className="p-3 bg-info/10 rounded-lg">
               <Clock className="h-6 w-6 text-info" />
@@ -168,14 +214,14 @@ export default function Home() {
               <div className="flex justify-between mb-2">
                 <span className="text-sm font-medium">Overall Progress</span>
                 <span className="text-sm font-bold text-primary">
-                  {Math.round((stats.completed / stats.total) * 100)}%
+                  {completionRate}%
                 </span>
               </div>
               <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-gradient-to-r from-primary to-primary/60 h-full transition-all duration-500"
                   style={{
-                    width: `${(stats.completed / stats.total) * 100}%`,
+                    width: `${completionRate}%`,
                   }}
                 />
               </div>
@@ -190,7 +236,7 @@ export default function Home() {
               </div>
               <div>
                 <Badge variant="info" className="justify-center w-full mb-2">
-                  {stats.inProgress}
+                  {stats.in_progress}
                 </Badge>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
@@ -249,52 +295,6 @@ export default function Home() {
           </div>
         </Card>
       </div>
-
-      {/* Features Section */}
-      {/* <Card className="p-8 bg-gradient-to-br from-primary/5 to-primary/0 border-primary/20">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Powerful Features</h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Everything you need to manage tasks effectively and boost your
-            productivity
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="p-3 bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Quick Create</h3>
-              <p className="text-sm text-muted-foreground">
-                Add tasks instantly with priority and due dates
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="p-3 bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <Filter className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Smart Filters</h3>
-              <p className="text-sm text-muted-foreground">
-                Organize tasks by status, priority, and dates
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="p-3 bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <BarChart3 className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Analytics</h3>
-              <p className="text-sm text-muted-foreground">
-                Track your productivity and completion rates
-              </p>
-            </div>
-          </div>
-        </div>
-      </Card> */}
     </div>
   );
 }
-
-// Add missing import
-import { Filter } from "lucide-react";
