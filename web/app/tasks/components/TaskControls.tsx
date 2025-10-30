@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter } from "lucide-react";
+import { Filter, ArrowUpDown } from "lucide-react";
 import { SearchInput } from "./SearchInput";
 
 interface TaskControlsProps {
@@ -59,6 +59,7 @@ export function TaskControls({
 
         {/* Sort */}
         <div className="flex items-center gap-2 flex-1">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <span className="text-sm font-medium whitespace-nowrap">Sort:</span>
           <Select value={sortBy} onValueChange={onSortChange}>
             <SelectTrigger className="flex-1 h-10">

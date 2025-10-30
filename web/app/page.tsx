@@ -32,7 +32,7 @@ export default function Home() {
     if (!user) {
       router.push("/login");
     } else {
-      // Simulate fetching stats - replace with actual API call
+      // Simulate fetching stats
       setTimeout(() => {
         setStats({
           total: 12,

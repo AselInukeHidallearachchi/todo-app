@@ -45,7 +45,6 @@ export default function AdminUsersPage() {
 
     try {
       const res = await api.get("/users");
-
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err: unknown) {
       const error = err as {
@@ -118,7 +117,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50">
-      <div className="max-w-6xl mx-auto p-6 animate-fade-in">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
         {/* Header */}
         <div className="mb-8">
           <button
@@ -166,7 +165,7 @@ export default function AdminUsersPage() {
           </Alert>
         )}
 
-        {/* Users Table */}
+        {/* Users */}
         {users.length === 0 ? (
           <Card className="p-12 text-center">
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -179,9 +178,9 @@ export default function AdminUsersPage() {
           </Card>
         ) : (
           <Card className="overflow-hidden shadow-soft-lg">
-            {/* Table Header */}
-            <div className="bg-card border-b border-border/50 px-6 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
+            {/* Table Header (desktop only) */}
+            <div className="hidden md:block bg-card border-b border-border/50 px-6 py-4">
+              <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
                 <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                   User
                 </div>
@@ -200,46 +199,41 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {/* Table Body */}
+            {/* Table / Cards Body */}
             <div className="divide-y divide-border/30">
               {users.map((user) => (
-                <div
-                  key={user.id}
-                  className="px-6 py-4 hover:bg-muted/30 transition-colors duration-200 group"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
-                    {/* User Name */}
+                <div key={user.id}>
+                  {/* Desktop Row */}
+                  <div className="hidden md:grid px-6 py-4 hover:bg-muted/30 transition-colors duration-200 grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
+                    {/* User */}
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">
-                          {user.name}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div className="min-w-0">
-                      <p className="text-sm text-muted-foreground truncate">
-                        {user.email}
+                      <p className="font-medium text-foreground truncate">
+                        {user.name}
                       </p>
                     </div>
 
-                    {/* Role Badge */}
+                    {/* Email */}
+                    <p className="text-sm text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+
+                    {/* Role */}
                     <Badge
                       variant={user.role === "admin" ? "default" : "secondary"}
-                      className={`gap-1 w-fit  ${
+                      className={`gap-1 w-fit ${
                         user.role === "admin"
                           ? "bg-destructive hover:bg-destructive/90"
-                          : " hover:bg-primary/90"
+                          : "hover:bg-primary/90"
                       }`}
                     >
                       <Shield className="h-3 w-3" />
                       {user.role === "admin" ? "Admin" : "User"}
                     </Badge>
 
+                    {/* Status */}
                     <div className="flex items-center gap-2">
                       {updatingId === user.id ? (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -247,7 +241,6 @@ export default function AdminUsersPage() {
                         <Switch
                           checked={user.is_active}
                           onCheckedChange={() => toggleActive(user)}
-                          disabled={updatingId === user.id}
                         />
                       )}
                       <span
@@ -261,7 +254,7 @@ export default function AdminUsersPage() {
                       </span>
                     </div>
 
-                    {/* Action Button */}
+                    {/* Action */}
                     <div className="flex justify-left">
                       <Button
                         onClick={() => toggleRole(user)}
@@ -273,21 +266,82 @@ export default function AdminUsersPage() {
                         {updatingId === user.id ? (
                           <>
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span className="hidden sm:inline">
-                              Updating...
-                            </span>
+                            Updating...
                           </>
                         ) : (
                           <>
                             <Shield className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">
-                              Change to{" "}
-                              {user.role === "admin" ? "User" : "Admin"}
-                            </span>
-                            <span className="sm:hidden">
-                              {user.role === "admin" ? "User" : "Admin"}
-                            </span>
+                            Change to {user.role === "admin" ? "User" : "Admin"}
                           </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Mobile Card */}
+                  <div className="block md:hidden border-b border-border/30 px-4 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant={
+                          user.role === "admin" ? "default" : "secondary"
+                        }
+                        className={`gap-1 ${
+                          user.role === "admin"
+                            ? "bg-destructive hover:bg-destructive/90"
+                            : "hover:bg-primary/90"
+                        }`}
+                      >
+                        <Shield className="h-3 w-3" />
+                        {user.role}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-2">
+                        {updatingId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <Switch
+                            checked={user.is_active}
+                            onCheckedChange={() => toggleActive(user)}
+                          />
+                        )}
+                        <span
+                          className={`text-sm font-medium ${
+                            user.is_active
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-destructive"
+                          }`}
+                        >
+                          {user.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+
+                      <Button
+                        onClick={() => toggleRole(user)}
+                        size="sm"
+                        disabled={updatingId === user.id}
+                        variant={user.role === "admin" ? "outline" : "default"}
+                      >
+                        {updatingId === user.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : user.role === "admin" ? (
+                          "Make User"
+                        ) : (
+                          "Make Admin"
                         )}
                       </Button>
                     </div>
@@ -295,14 +349,6 @@ export default function AdminUsersPage() {
                 </div>
               ))}
             </div>
-
-            {/* Table Footer */}
-            {/* <div className="bg-muted/20 px-6 py-4 border-t border-border/30">
-              <p className="text-xs text-muted-foreground text-center">
-                💡 Showing {users.length} user{users.length !== 1 ? "s" : ""} •
-                Active users marked with green status
-              </p>
-            </div> */}
           </Card>
         )}
       </div>
