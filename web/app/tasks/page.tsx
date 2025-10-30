@@ -9,7 +9,7 @@ import { TaskCard } from "./components/TaskCard";
 import { EmptyState } from "./components/EmptyState";
 import { TaskPagination } from "./components/TaskPagination";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Task, PaginationMeta } from "@/types/task";
+import { Task, PaginationMeta, PaginatedResponse } from "@/types/task";
 
 export default function TaskListPage() {
   const router = useRouter();
@@ -41,26 +41,15 @@ export default function TaskListPage() {
           params.append("search", debouncedSearch.trim());
         }
 
-        console.log("Fetching tasks with params:", params.toString());
+        //console.log("Fetching tasks with params:", params.toString());
         const res = await api.get(`/tasks?${params.toString()}`);
 
-        console.log("API Response:", res.data);
+        //console.log("API Response:", res.data);
 
-        // Transform Laravel pagination to the format
-        const apiResponse = res.data;
-        const transformedMeta: PaginationMeta = {
-          current_page: apiResponse.current_page,
-          from: apiResponse.from,
-          last_page: apiResponse.last_page,
-          path: apiResponse.path,
-          per_page: apiResponse.per_page,
-          to: apiResponse.to,
-          total: apiResponse.total,
-        };
+        const response = res.data as PaginatedResponse;
 
-        setTasks(apiResponse.data || []);
-        persi;
-        setPagination(transformedMeta);
+        setTasks(response.data || []);
+        setPagination(response.meta);
         setCurrentPage(pageNum);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (error) {

@@ -7,6 +7,8 @@ use App\Http\Requests\{CreateTaskRequest, UpdateTaskRequest};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Http\Resources\PaginationResource;
+
 
 class TaskHandler
 {
@@ -28,9 +30,13 @@ class TaskHandler
             'per_page' => (int) $request->query('per_page', 15),
         ];
 
+        //get paginated tasks
         $tasks = $this->taskService->getAllTasks($user,$filters); 
+
+        //transform pagination format
+        $formatted = PaginationResource::transform($tasks);
         
-        return response()->json($tasks);
+        return response()->json($formatted);
         }catch(\Exception $e){
             return response()->json([
             'message' => 'Error fetching tasks',
