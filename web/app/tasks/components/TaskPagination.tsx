@@ -25,15 +25,6 @@ export function TaskPagination({
 }: TaskPaginationProps) {
   const { current_page, last_page, total, per_page, from, to } = pagination;
 
-  console.log("TaskPagination Received:", {
-    current_page,
-    last_page,
-    total,
-    per_page,
-    from,
-    to,
-  }); // DEBUG
-
   // Generate page numbers with ellipsis
   const getPageNumbers = () => {
     const delta = 2;
@@ -63,12 +54,10 @@ export function TaskPagination({
       l = i;
     });
 
-    console.log("Page numbers generated:", rangeWithDots); // DEBUG
     return rangeWithDots;
   };
 
   if (last_page <= 1) {
-    console.log("Hiding pagination - only 1 page"); // DEBUG
     return null;
   }
 
@@ -90,10 +79,6 @@ export function TaskPagination({
               <PaginationPrevious
                 onClick={() => {
                   if (current_page > 1 && !isLoading) {
-                    console.log(
-                      "Clicking previous - going to page",
-                      current_page - 1
-                    );
                     onPageChange(current_page - 1);
                   }
                 }}
@@ -114,7 +99,6 @@ export function TaskPagination({
                   <PaginationLink
                     onClick={() => {
                       if (!isLoading) {
-                        console.log("Clicking page", page);
                         onPageChange(page as number);
                       }
                     }}
@@ -136,10 +120,6 @@ export function TaskPagination({
               <PaginationNext
                 onClick={() => {
                   if (current_page < last_page && !isLoading) {
-                    console.log(
-                      "Clicking next - going to page",
-                      current_page + 1
-                    );
                     onPageChange(current_page + 1);
                   }
                 }}
