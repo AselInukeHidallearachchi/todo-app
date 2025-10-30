@@ -46,8 +46,11 @@ class TaskService
     } else {
         $query->latest(); // Default sort
     }
+    //Pagination
+    $perPage = $filters['per_page'] ?? 15;
+    $page = $filters['page'] ?? 1;
 
-    return $query->get();
+    return $query->paginate($perPage,['*'],'page',$page);
 }
 
     /**

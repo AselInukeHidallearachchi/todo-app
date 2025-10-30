@@ -23,5 +23,26 @@ export interface Task {
   attachments?: Attachment[];
 }
 
+export interface PaginationMeta {
+  current_page: number;
+  from: number;
+  last_page: number;
+  path: string;
+  per_page: number;
+  to: number;
+  total: number;
+}
+
+export interface PaginatedResponse {
+  data: Task[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: PaginationMeta;
+}
+
 export type SortOption = "recent" | "priority" | "status" | "due-date";
 export type FilterOption = "all" | "todo" | "in_progress" | "completed";
