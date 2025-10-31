@@ -14,12 +14,18 @@ interface TaskAttachmentsProps {
   task: Task;
   onUpdate: (task: Task) => void;
   isEditMode?: boolean;
+  onAttachmentAdded?: (attachmentId: number) => void;
+  onAttachmentDeleted?: (attachmentId: number) => void;
+  deferDeletions?: boolean; // If true, don't delete immediately, just notify parent
 }
 
 export function TaskAttachments({
   task,
   onUpdate,
   isEditMode = false,
+  onAttachmentAdded,
+  onAttachmentDeleted,
+  deferDeletions = false,
 }: TaskAttachmentsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false); // UI state for drag feedback
@@ -34,6 +40,16 @@ export function TaskAttachments({
       setSuccess("");
 
       const attachment = await uploadTaskAttachment(task.id, file);
+
+      // Notify parent component of the new attachment ID for tracking
+      if (
+        onAttachmentAdded &&
+        attachment &&
+        typeof attachment === "object" &&
+        "id" in attachment
+      ) {
+        onAttachmentAdded((attachment as { id: number }).id);
+      }
 
       onUpdate({
         ...task,
@@ -99,7 +115,17 @@ export function TaskAttachments({
     try {
       setError("");
       setSuccess("");
-      await deleteTaskAttachment(task.id, attachmentId);
+
+      if (!deferDeletions) {
+        // Delete immediately if not deferring
+        await deleteTaskAttachment(task.id, attachmentId);
+      }
+
+      // Notify parent component of the deleted attachment for tracking
+      if (onAttachmentDeleted) {
+        onAttachmentDeleted(attachmentId);
+      }
+
       onUpdate({
         ...task,
         attachments:

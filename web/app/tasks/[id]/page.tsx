@@ -28,6 +28,7 @@ import {
   Edit,
 } from "lucide-react";
 import { TaskAttachments } from "@/app/components/task/task-attachments";
+import { deleteTaskAttachment } from "@/lib/api";
 
 import type { Task as TaskType } from "@/types/task";
 type Task = TaskType;
@@ -44,6 +45,15 @@ export default function TaskDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [attachmentsAddedDuringEdit, setAttachmentsAddedDuringEdit] = useState<
+    number[]
+  >([]);
+  const [attachmentsDeletedDuringEdit, setAttachmentsDeletedDuringEdit] =
+    useState<number[]>([]);
+  const [originalAttachments, setOriginalAttachments] = useState<
+    Task["attachments"]
+  >([]);
 
   useEffect(() => {
     fetchTask();
@@ -89,7 +99,7 @@ export default function TaskDetailPage() {
   };
 
   const handleSave = async () => {
-    if (!form) return;
+    if (!form || !task) return;
 
     setSaving(true);
     setError("");
@@ -99,6 +109,17 @@ export default function TaskDetailPage() {
     if (!token) return router.push("/login");
 
     try {
+      // Delete attachments that were marked for deletion during edit
+      if (attachmentsDeletedDuringEdit.length > 0) {
+        for (const attachmentId of attachmentsDeletedDuringEdit) {
+          try {
+            await deleteTaskAttachment(task.id, attachmentId);
+          } catch (err) {
+            console.error(`Failed to delete attachment ${attachmentId}:`, err);
+          }
+        }
+      }
+
       const formData = {
         title: form.title.trim(),
         description: form.description.trim(),
@@ -118,6 +139,9 @@ export default function TaskDetailPage() {
       setIsEditing(false);
       setSuccess("Task updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
+      // Clear tracking arrays
+      setAttachmentsAddedDuringEdit([]);
+      setAttachmentsDeletedDuringEdit([]);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || "Failed to save task");
@@ -143,10 +167,35 @@ export default function TaskDetailPage() {
     }
   };
 
-  const handleCancel = () => {
-    setForm(task);
+  const handleCancel = async () => {
+    if (!task) return;
+
+    // Delete any attachments that were added during this edit session
+    if (attachmentsAddedDuringEdit.length > 0) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        for (const attachmentId of attachmentsAddedDuringEdit) {
+          try {
+            await deleteTaskAttachment(task.id, attachmentId);
+          } catch (err) {
+            console.error(`Failed to delete attachment ${attachmentId}:`, err);
+          }
+        }
+      }
+    }
+
+    // Restore the task to its original state (before edit)
+    const restoredTask = {
+      ...task,
+      attachments: originalAttachments,
+    };
+    setTask(restoredTask);
+    setForm(restoredTask);
+
     setIsEditing(false);
     setError("");
+    setAttachmentsAddedDuringEdit([]);
+    setAttachmentsDeletedDuringEdit([]);
   };
 
   if (loading) {
@@ -208,7 +257,12 @@ export default function TaskDetailPage() {
           <div className="flex gap-2">
             {!isEditing && (
               <Button
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  setOriginalAttachments(task.attachments || []);
+                  setAttachmentsAddedDuringEdit([]);
+                  setAttachmentsDeletedDuringEdit([]);
+                  setIsEditing(true);
+                }}
                 className="gap-2"
                 variant="outline"
               >
@@ -392,6 +446,19 @@ export default function TaskDetailPage() {
                     setForm(updatedTask);
                   }}
                   isEditMode={true}
+                  deferDeletions={true}
+                  onAttachmentAdded={(attachmentId) => {
+                    setAttachmentsAddedDuringEdit([
+                      ...attachmentsAddedDuringEdit,
+                      attachmentId,
+                    ]);
+                  }}
+                  onAttachmentDeleted={(attachmentId) => {
+                    setAttachmentsDeletedDuringEdit([
+                      ...attachmentsDeletedDuringEdit,
+                      attachmentId,
+                    ]);
+                  }}
                 />
               )}
             </form>
