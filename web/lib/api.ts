@@ -1,7 +1,36 @@
 import axios from "axios";
 
+// Types for API responses
+export interface TaskStats {
+  total: number;
+  completed: number;
+  in_progress: number;
+  pending: number;
+}
+
+// Resolve a sensible API base URL and prefix (works even if env var wasn't present at build time)
+// Priority for host: NEXT_PUBLIC_API_BASE_URL -> derive from browser host (replace port 3000 with 8000) -> fallback to http://localhost:8000
+const resolvedHost = (() => {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL)
+    return process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/$/, "");
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port =
+      window.location.port === "3000" ? "8000" : window.location.port || "8000";
+    return `${protocol}//${hostname}:${port}`;
+  }
+  return "http://localhost:8000";
+})();
+
+const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX ?? "/api/v1";
+
+const baseURL = `${resolvedHost.replace(/\/$/, "")}${
+  apiPrefix.startsWith("/") ? apiPrefix : `/${apiPrefix}`
+}`;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -62,12 +91,31 @@ export const deleteTaskAttachment = async (
 };
 
 // Fetch task statistics for the logged-in user
-export const fetchTaskStatistics = async () => {
+export const fetchTaskStatistics = async (): Promise<TaskStats> => {
   const token = localStorage.getItem("token");
-  const response = await api.get("/tasks-statistics", {
+  const response = await api.get<TaskStats>("/tasks-statistics", {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
+};
+
+// Small typed helpers for consistent API usage across the app.
+export const get = async <T = unknown>(url: string) => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : undefined;
+  const response = await api.get<T>(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return response.data as T;
+};
+
+export const post = async <T = unknown, B = unknown>(url: string, body?: B) => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : undefined;
+  const response = await api.post<T>(url, body, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return response.data as T;
 };
 
 export default api;

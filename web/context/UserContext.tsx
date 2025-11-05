@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
 import api from "@/lib/api";
 
@@ -18,6 +24,10 @@ interface UserContextType {
   setUser: (userData: User, token: string) => void;
 }
 
+interface AuthResponse {
+  user: User;
+}
+
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
@@ -30,6 +40,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
+  const clearUser = useCallback(() => {
+    setUserState(null);
+    localStorage.removeItem("token");
+    delete api.defaults.headers.common.Authorization;
+    if (!["/login", "/register"].includes(pathname)) {
+      router.replace("/login");
+    }
+  }, [pathname, router]);
 
   // Initialize auth state
   useEffect(() => {
@@ -44,9 +63,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       try {
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
-        const response = await api.get("/auth/me");
+        const response = await api.get<AuthResponse>("/auth/me");
         setUserState(response.data.user);
-      } catch (error) {
+      } catch {
         clearUser();
       } finally {
         setLoading(false);
@@ -54,16 +73,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
-  }, []);
-
-  const clearUser = () => {
-    setUserState(null);
-    localStorage.removeItem("token");
-    delete api.defaults.headers.common.Authorization;
-    if (!["/login", "/register"].includes(pathname)) {
-      router.replace("/login");
-    }
-  };
+  }, [clearUser]);
 
   const setUser = (userData: User, token: string) => {
     if (!userData || !token) {
@@ -90,7 +100,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [clearUser]);
 
   return (
     <UserContext.Provider value={{ user, loading, clearUser, setUser }}>

@@ -1,0 +1,81 @@
+services:
+  # Database (MySQL) - Start first
+  db:
+    image: mysql:8.0
+    container_name: todo-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todo
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - todo-network
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      timeout: 5s
+      retries: 10
+      interval: 3s
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Backend (Laravel API)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: todo-api
+    ports:
+      - "8000:80"
+    volumes:
+      - ./api:/var/www/html
+      - api_vendor:/var/www/html/vendor
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=todo
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - APP_KEY=base64:iB8ndzIL9taiDW4WDLSq7NHmGVarmvy+p4P+8+BPJgk=
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - todo-network
+
+  # Frontend (Next.js)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+        - NEXT_PUBLIC_API_PREFIX=/api/v1
+    container_name: todo-web
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+      - API_INTERNAL_URL=http://todo-api:80
+      - NEXT_PUBLIC_API_PREFIX=/api/v1
+    depends_on:
+      - api
+    networks:
+      - todo-network
+
+volumes:
+  db_data:
+  api_vendor:
+
+networks:
+  todo-network:
+    driver: bridge
