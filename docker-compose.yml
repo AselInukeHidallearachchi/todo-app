@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
-        - NEXT_PUBLIC_API_PREFIX=/api/v1
+
     container_name: todo-web
     ports:
       - "3000:3000"
@@ -66,7 +66,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
       - API_INTERNAL_URL=http://todo-api:80
-      - NEXT_PUBLIC_API_PREFIX=/api/v1
+
     depends_on:
       - api
     networks:

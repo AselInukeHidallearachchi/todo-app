@@ -8,8 +8,7 @@ export interface TaskStats {
   pending: number;
 }
 
-// Resolve a sensible API base URL and prefix (works even if env var wasn't present at build time)
-// Priority for host: NEXT_PUBLIC_API_BASE_URL -> derive from browser host (replace port 3000 with 8000) -> fallback to http://localhost:8000
+// Resolve a sensible API base URL (works even if env var wasn't present at build time)
 const resolvedHost = (() => {
   if (process.env.NEXT_PUBLIC_API_BASE_URL)
     return process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/$/, "");
@@ -23,14 +22,8 @@ const resolvedHost = (() => {
   return "http://localhost:8000";
 })();
 
-const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX ?? "/api/v1";
-
-const baseURL = `${resolvedHost.replace(/\/$/, "")}${
-  apiPrefix.startsWith("/") ? apiPrefix : `/${apiPrefix}`
-}`;
-
 const api = axios.create({
-  baseURL,
+  baseURL: resolvedHost,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -70,7 +63,6 @@ export const uploadTaskAttachment = async (taskId: number, file: File) => {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "multipart/form-data",
-      // Don't set Content-Type - let axios/browser set it automatically for FormData
     },
   });
 
