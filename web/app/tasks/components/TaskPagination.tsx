@@ -23,14 +23,14 @@ export function TaskPagination({
   onPageChange,
   isLoading = false,
 }: TaskPaginationProps) {
-  const { current_page, last_page, total, per_page, from, to } = pagination;
+  const { current_page, last_page, total, from, to } = pagination;
 
   // Generate page numbers with ellipsis
   const getPageNumbers = () => {
     const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-    let l;
+    const range: number[] = [];
+    const rangeWithDots: Array<number | string> = [];
+    let l: number | undefined;
 
     for (let i = 1; i <= last_page; i++) {
       if (

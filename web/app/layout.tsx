@@ -1,8 +1,6 @@
-/* eslint-disable */
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
-/* eslint-enable */
 import { ReactNode } from "react";
 import { UserProvider } from "@/context/UserContext";
 
