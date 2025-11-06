@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`API Module matches snapshot 1`] = `
+{
+  "get": [MockFunction],
+  "interceptors": {
+    "request": {
+      "use": [MockFunction],
+    },
+    "response": {
+      "use": [MockFunction],
+    },
+  },
+  "post": [MockFunction],
+}
+`;
