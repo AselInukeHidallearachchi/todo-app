@@ -105,9 +105,11 @@ This is a modern todo application that allows users to create, manage, and track
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │  Tables:                                                             │   │
 │  │  ├─ users (id, name, email, password, role, is_active)             │   │
-│  │  ├─ tasks (id, user_id, title, description, status, priority, ...)│   │
-│  │  ├─ attachments (id, task_id, uploaded_by, file_name, ...)        │   │
-│  │  ├─ user_preferences (id, user_id, preferences)                    │   │
+│  │  ├─ tasks (id, user_id, title, description, status, priority,      │   │
+│  │  │           due_date, completed_at, timestamps)                   │   │
+│  │  ├─ attachments (id, task_id, uploaded_by, file_name, file_path,  │   │
+│  │  │              file_size, mime_type, timestamps)                  │   │
+│  │  ├─ user_preferences (id, user_id, preferences, timestamps)        │   │
 │  │  └─ personal_access_tokens (Sanctum authentication tokens)         │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -129,8 +131,9 @@ This is a modern todo application that allows users to create, manage, and track
 1. **User Authentication Flow**
    ```
    User → Frontend → POST /api/v1/auth/login → AuthController 
-   → User Model → Database → Token Generated → Response to Frontend
-   → Token Stored → Subsequent requests include token in headers
+   → User Model → Database → Token Generated (Sanctum) → Response to Frontend
+   → Token Stored in localStorage → Subsequent requests include token 
+   in Authorization: Bearer {token} header
    ```
 
 2. **Task Creation Flow**
