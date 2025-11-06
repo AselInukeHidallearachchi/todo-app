@@ -1,0 +1,34 @@
+services:
+  api:
+    image: aselinuke/todo-app-api:latest
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=todo
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+
+  web:
+    image: aselinuke/todo-app-web:latest
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=todo
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
