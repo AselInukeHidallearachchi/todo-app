@@ -477,6 +477,29 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📞 Support
 
+## 🚀 How to Run Tests
+
+### Run All Tests (Inside Docker)
+```bash
+docker compose exec api php artisan test tests/Feature
+```
+
+### Run Specific Test File
+```bash
+docker compose exec api php artisan test tests/Feature/AuthenticationTest.php
+```
+
+### Run Specific Test
+```bash
+docker compose exec api php artisan test tests/Feature/AuthenticationTest.php --filter="user_can_register"
+```
+
+### Run with Coverage
+```bash
+docker compose exec api php artisan test tests/Feature --coverage
+```
+
+
 For support, please open an issue in the GitHub repository or contact the maintainers.
 
 ---
