@@ -35,94 +35,94 @@ This is a modern todo application that allows users to create, manage, and track
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              USER / CLIENT                                   │
-│                         (Web Browser / API Client)                           │
+│                              USER / CLIENT                                  │
+│                         (Web Browser / API Client)                          │
 └──────────────────────────────────┬──────────────────────────────────────────┘
                                    │
                                    │ HTTP/HTTPS
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────────┐
-│                         FRONTEND - Next.js (Port 3000)                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  React 19 Components (TypeScript)                                   │   │
-│  │  ├─ Pages: Dashboard, Tasks, Login, Register, Settings, Admin      │   │
-│  │  ├─ Context: UserContext (State Management)                        │   │
-│  │  ├─ UI: Radix UI + Tailwind CSS                                    │   │
-│  │  └─ Forms: React Hook Form + Zod Validation                        │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
+│                         FRONTEND - Next.js (Port 3000)                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  React 19 Components (TypeScript)                                   │    │
+│  │  ├─ Pages: Dashboard, Tasks, Login, Register, Settings, Admin       │    │
+│  │  ├─ Context: UserContext (State Management)                         │    │
+│  │  ├─ UI: Radix UI + Tailwind CSS                                     │    │
+│  │  └─ Forms: React Hook Form + Zod Validation                         │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
 └──────────────────────────────────┬──────────────────────────────────────────┘
                                    │
                                    │ REST API Calls
                                    │ (axios)
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────────┐
-│                        BACKEND API - Laravel (Port 8000)                     │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  API Routes (/api/v1/*)                                             │   │
-│  │  ├─ Authentication Routes (Sanctum Token-based)                     │   │
-│  │  │  └─ register, login, logout, me                                 │   │
-│  │  ├─ Task Routes (CRUD + Statistics)                                │   │
-│  │  │  └─ index, store, show, update, destroy, statistics            │   │
-│  │  ├─ Attachment Routes (File Management)                            │   │
-│  │  │  └─ index, store, destroy                                       │   │
-│  │  └─ Admin Routes (User Management)                                 │   │
-│  │     └─ users CRUD, updateRole, toggleActive                        │   │
+│                        BACKEND API - Laravel (Port 8000)                    |
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  API Routes (/api/v1/*)                                             │    │
+│  │  ├─ Authentication Routes (Sanctum Token-based)                     │    │
+│  │  │  └─ register, login, logout, me                                  │    │
+│  │  ├─ Task Routes (CRUD + Statistics)                                 │    │
+│  │  │  └─ index, store, show, update, destroy, statistics              │    │
+│  │  ├─ Attachment Routes (File Management)                             │    │
+│  │  │  └─ index, store, destroy                                        │    │
+│  │  └─ Admin Routes (User Management)                                  │    │
+│  │     └─ users CRUD, updateRole, toggleActive                         │    │
+│  └─────────────────────────┬───────────────────────────────────────────┘    │
+│                            │                                                │
+│  ┌─────────────────────────▼───────────────────────────────────────────┐    │
+│  │  Middleware Layer                                                   |    │
+│  │  ├─ auth:sanctum - Token Authentication                             │   │
+│  │  ├─ CheckUserActive - Verify user is active                         │   │
+│  │  └─ admin - Admin role verification                                 │   │
 │  └─────────────────────────┬───────────────────────────────────────────┘   │
-│                            │                                                 │
+│                            │                                               │
 │  ┌─────────────────────────▼───────────────────────────────────────────┐   │
-│  │  Middleware Layer                                                    │   │
-│  │  ├─ auth:sanctum - Token Authentication                            │   │
-│  │  ├─ CheckUserActive - Verify user is active                        │   │
-│  │  └─ admin - Admin role verification                                │   │
-│  └─────────────────────────┬───────────────────────────────────────────┘   │
-│                            │                                                 │
-│  ┌─────────────────────────▼───────────────────────────────────────────┐   │
-│  │  Controllers (Request Handling)                                      │   │
+│  │  Controllers (Request Handling)                                     │   │
 │  │  ├─ AuthController - User authentication                            │   │
-│  │  ├─ TaskController - Task management                               │   │
-│  │  ├─ UserController - User & preferences management                 │   │
-│  │  └─ AttachmentController - File attachments                        │   │
+│  │  ├─ TaskController - Task management                                │   │
+│  │  ├─ UserController - User & preferences management                  │   │
+│  │  └─ AttachmentController - File attachments                         │   │
 │  └─────────────────────────┬───────────────────────────────────────────┘   │
-│                            │                                                 │
+│                            │                                               │
 │  ┌─────────────────────────▼───────────────────────────────────────────┐   │
-│  │  Handlers (Business Logic)                                           │   │
+│  │  Handlers (Business Logic)                                          │   │
 │  │  └─ TaskHandler - Task processing logic                             │   │
 │  └─────────────────────────┬───────────────────────────────────────────┘   │
-│                            │                                                 │
+│                            │                                               │
 │  ┌─────────────────────────▼───────────────────────────────────────────┐   │
-│  │  Models (Eloquent ORM)                                               │   │
-│  │  ├─ User (hasMany: tasks, attachments; hasOne: preference)         │   │
-│  │  ├─ Task (belongsTo: user; hasMany: attachments)                   │   │
-│  │  ├─ Attachment (belongsTo: task, uploaded_by)                      │   │
-│  │  └─ UserPreference (belongsTo: user)                               │   │
+│  │  Models (Eloquent ORM)                                              │   │
+│  │  ├─ User (hasMany: tasks, attachments; hasOne: preference)          │   │
+│  │  ├─ Task (belongsTo: user; hasMany: attachments)                    │   │
+│  │  ├─ Attachment (belongsTo: task, uploaded_by)                       │   │
+│  │  └─ UserPreference (belongsTo: user)                                │   │
 │  └─────────────────────────┬───────────────────────────────────────────┘   │
-└────────────────────────────┼─────────────────────────────────────────────────┘
+└────────────────────────────┼───────────────────────────────────────────────┘
                              │
                              │ PDO/MySQL Driver
                              │
 ┌────────────────────────────▼─────────────────────────────────────────────────┐
 │                        DATABASE - MySQL 8.0 (Port 3307)                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  Tables:                                                             │   │
-│  │  ├─ users (id, name, email, password, role, is_active)             │   │
-│  │  ├─ tasks (id, user_id, title, description, status, priority,      │   │
-│  │  │           due_date, completed_at, timestamps)                   │   │
-│  │  ├─ attachments (id, task_id, uploaded_by, file_name, file_path,  │   │
-│  │  │              file_size, mime_type, timestamps)                  │   │
-│  │  ├─ user_preferences (id, user_id, preferences, timestamps)        │   │
-│  │  └─ personal_access_tokens (Sanctum authentication tokens)         │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────────┐     │
+│  │  Tables:                                                            │     │
+│  │  ├─ users (id, name, email, password, role, is_active)              │     │
+│  │  ├─ tasks (id, user_id, title, description, status, priority,       │     │
+│  │  │           due_date, completed_at, timestamps)                    │     │
+│  │  ├─ attachments (id, task_id, uploaded_by, file_name, file_path,    │     │
+│  │  │              file_size, mime_type, timestamps)                   │     │
+│  │  ├─ user_preferences (id, user_id, preferences, timestamps)         │     │
+│  │  └─ personal_access_tokens (Sanctum authentication tokens)          │     │
+│  └─────────────────────────────────────────────────────────────────────┘     │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            DOCKER INFRASTRUCTURE                             │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                │
-│  │  web container │  │  api container │  │  db container  │                │
-│  │  Next.js:3000  │  │  Laravel:8000  │  │  MySQL:3307    │                │
-│  └────────────────┘  └────────────────┘  └────────────────┘                │
-│           │                   │                   │                          │
-│           └───────────────────┴───────────────────┘                          │
-│                      todo-network (bridge)                                   │
+│                            DOCKER INFRASTRUCTURE                            │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                 │
+│  │  web container │  │  api container │  │  db container  │                 │
+│  │  Next.js:3000  │  │  Laravel:8000  │  │  MySQL:3307    │                 │
+│  └────────────────┘  └────────────────┘  └────────────────┘                 │
+│           │                   │                   │                         │
+│           └───────────────────┴───────────────────┘                         │
+│                      todo-network (bridge)                                  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
