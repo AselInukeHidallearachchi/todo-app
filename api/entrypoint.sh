@@ -5,13 +5,9 @@ echo "====================================="
 echo "Starting Todo App API Container"
 echo "====================================="
 
-# Install composer dependencies if vendor folder doesn't exist
-if [ ! -d "vendor" ]; then
-    echo "Installing Composer dependencies..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-else
-    echo "Composer dependencies already installed"
-fi
+# Always try to install/update composer dependencies
+echo "Installing/Updating Composer dependencies..."
+composer install --no-interaction --prefer-dist --optimize-autoloader 2>&1 || echo "⚠️  Composer install warning"
 
 # Wait for database to be ready
 echo "Waiting for database connection..."
