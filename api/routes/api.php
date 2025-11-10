@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, TaskController, UserController,AttachmentController};
+use App\Http\Controllers\{AuthController, TaskController, UserController};
 
 // Handle preflight OPTIONS requests
 Route::options('v1/{any}', function () {
@@ -20,14 +20,14 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('tasks', TaskController::class);
             Route::get('/tasks-statistics', [TaskController::class, 'statistics']);
 
-            //Attachment routes 
-            Route::get('/tasks/{task}/attachments', [AttachmentController::class, 'index']);
-            Route::post('/tasks/{task}/attachments', [AttachmentController::class, 'store']);
-            Route::delete('/tasks/{task}/attachments/{attachment}', [AttachmentController::class, 'destroy']);
+            //Attachment routes
+            Route::get('/tasks/{task}/attachments', [TaskController::class, 'indexAttachments']);
+            Route::post('/tasks/{task}/attachments', [TaskController::class, 'storeAttachment']);
+            Route::delete('/tasks/{task}/attachments/{attachment}', [TaskController::class, 'destroyAttachment']);
 
             //Preferences routes
             Route::get('/user/preferences',[UserController::class, 'getPreferences']);
-            Route::put('/user/preferences',[UserController::class, 'updatePreferences']);
+            Route::put('/user/preferences',[UserController::class, 'updatePreferences']);//group this
 
             // Admin routes
             Route::middleware('admin')->group(function () {
