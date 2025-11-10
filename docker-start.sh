@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_BIN="/usr/local/bin/docker"
+DOCKER_BIN="/Applications/Docker.app/Contents/Resources/bin/docker"
 
 echo "🐳 Starting Todo App with Docker..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
