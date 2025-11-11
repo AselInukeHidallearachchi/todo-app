@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 
 class AuthService
@@ -19,7 +20,7 @@ class AuthService
         $token = $user->createToken('api')->plainTextToken;
 
         return [
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token
         ];
     }
@@ -43,7 +44,7 @@ class AuthService
         $token = $user->createToken('api')->plainTextToken;
 
         return [
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token
         ];
     }
