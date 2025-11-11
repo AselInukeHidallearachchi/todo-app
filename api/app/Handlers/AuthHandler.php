@@ -2,13 +2,16 @@
 
 namespace App\Handlers;
 
+use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Http\Requests\{RegisterRequest, LoginRequest};
 use Illuminate\Http\JsonResponse;
+use App\Http\Responses\ApiResponse;
+use App\Models\User;
 
 class AuthHandler
 {
-    protected $authService;
+    protected AuthService $authService;
 
     public function __construct(AuthService $authService)
     {
@@ -17,7 +20,9 @@ class AuthHandler
 
     public function handleRegister(RegisterRequest $request): JsonResponse
     {
-        $userData = [
+       try
+       {
+         $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
@@ -25,7 +30,10 @@ class AuthHandler
         ];
 
         $result = $this->authService->register($userData);
-        return response()->json($result, 201);
+        return ApiResponse::created($result,'User registered successfully');
+       }catch (\Exception $e){
+        return ApiResponse::serverError($e->getMessage());
+       }
     }
 
     public function handleLogin(LoginRequest $request): JsonResponse
@@ -34,29 +42,24 @@ class AuthHandler
             $result = $this->authService->login($request->email, $request->password);
 
         if (!$result) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+                return ApiResponse::unauthorized('Invalid credentials');
         }
 
-        return response()->json($result);
+        return ApiResponse::success($result, 'Login successful');
         }catch(\Illuminate\Auth\AuthenticationException $e){
-            return response()->json(['message'=>$e->getMessage()],403);
+            return ApiResponse::forbidden($e->getMessage());
         }
     }
 
-    public function handleLogout($user): JsonResponse
+    public function handleLogout(User $user): JsonResponse
     {
         $this->authService->logout($user);
-        return response()->json(['message' => 'Logged out']);
+        return ApiResponse::success(null, 'Logged out successfully');
     }
 
-    public function handleGetUser($user): JsonResponse
+    public function handleGetUser(User $user): JsonResponse
     {
-        return response()->json(['user' => $user]);
+        return ApiResponse::success(new UserResource($user), 'User profile retrieved successfully');
     }
-    public function handleGetTasks($user, array $filters = []): JsonResponse
-{
-    $tasks = $this->taskService->getAllTasks($user, $filters);
-    return response()->json($tasks);
 }
 
-}

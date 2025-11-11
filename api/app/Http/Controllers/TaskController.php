@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AttachmentResource;
 use App\Models\Task;
 use App\Models\Attachment;
 use App\Handlers\TaskHandler;
@@ -9,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\CreateTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
+use App\Http\Responses\ApiResponse;
+use App\Services\AttachmentService;
+
 
 class TaskController extends Controller
 {
@@ -16,13 +20,15 @@ class TaskController extends Controller
      * Task request handler instance
      */
     protected TaskHandler $taskHandler;
+    protected AttachmentService $attachmentService;
 
     /**
      * Initialize controller with task handler dependency
      */
-    public function __construct(TaskHandler $taskHandler)
+    public function __construct(TaskHandler $taskHandler, AttachmentService $attachmentService)
     {
         $this->taskHandler = $taskHandler;
+        $this->attachmentService = $attachmentService;
     }
 
     /**
@@ -81,7 +87,10 @@ class TaskController extends Controller
         ->with('uploader:id,name')
         ->latest()
         ->get();
-        return response()->json($attachments);
+        return ApiResponse::success(
+            AttachmentResource::collection($attachments),
+            'Attachments retrieved successfully'
+        );
     }
 
     // Upload attachment
@@ -93,39 +102,25 @@ class TaskController extends Controller
             'file' => ['required', 'file', 'max:10240', 'mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt']
         ]);
 
-        $file = $request->file('file');
-        $path = $file->store('attachments', 'public');//file configuration
+        $attachment = $this->attachmentService->uploadAttachment(
+            $task,
+            $request->file('file')
+        );
 
-        $attachment = Attachment::create([
-            'task_id' => $task->id,
-            'uploaded_by' => auth()->id(),
-            'original_name' => $file->getClientOriginalName(),
-            'path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'size_bytes' => $file->getSize(),
-        ]);
-
-
-        return response()->json($attachment->load('uploader:id,name'), 201);//trait or resource
+        return ApiResponse::created(
+            new AttachmentResource($attachment->load('uploader:id,name')),
+            'Attachment uploaded successfully'
+        );
        }
        catch(\Exception $e){
-            return response()->json(
-                [
-                    'message' => 'File upload failed',
-                    'error' => $e->getMessage()
-                ],500);
+            return ApiResponse::serverError('File upload failed',$e->getMessage());
        }
     }
 
     public function destroyAttachment(Task $task, Attachment $attachment): JsonResponse
     {
-        //Ensure attachment belongs to this task
         abort_unless($attachment->task_id === $task->id, 403);
-
-          // Delete file from storage
-          \Illuminate\Support\Facades\Storage::disk('public')->delete($attachment->path);
-
-        $attachment->delete();
-        return response()->json(['ok' => true]);
+        $this->attachmentService->deleteAttachment($attachment);
+        return ApiResponse::success(null, 'Attachment deleted successfully');
     }
 }
