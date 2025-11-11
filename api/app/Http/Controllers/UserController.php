@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Resources\UserResource;
+use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,34 +16,46 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         $users = User::all();
-        return response()->json($users);
+        return ApiResponse::success(
+            UserResource::collection($users),
+            'Users retrieved successfully'
+        );
     }
 
     // Get user details
     public function show(User $user): JsonResponse
     {
-        return response()->json($user);
+        return ApiResponse::success(
+            new UserResource($user),
+            'User retrieved successfully'
+        );
     }
 
     // Create new user (admin only)
     public function store(CreateUserRequest $request): JsonResponse
     {
         $user = User::create($request->validated());
-        return response()->json($user, 201);
+        return ApiResponse::created(
+            new UserResource($user),
+            'User created successfully'
+        );
     }
 
     // Update user (admin only)
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
         $user->update($request->validated());
-        return response()->json($user);
+        return ApiResponse::success(
+            new UserResource($user),
+            'User updated successfully'
+        );
     }
 
     // Delete user (admin only)
     public function destroy(User $user): JsonResponse
     {
         $user->delete();
-        return response()->json(['message' => 'User deleted']);
+        return ApiResponse::success(null, 'User deleted successfully');
     }
 
     // Change user role/status (admin only)
@@ -51,65 +65,69 @@ class UserController extends Controller
             'role' => 'sometimes|in:user,admin',
             'is_active' => 'sometimes|boolean',
         ]);
-        
+
         $user->update($validated);
-        return response()->json($user);
+        return ApiResponse::success(
+            new UserResource($user),
+            'User role updated successfully'
+        );
     }
 
-    public function toggleActive(Request $request, User $user)
-{
-    // Optional: Prevent admin from deactivating self
-    if ($user->id === $request->user()->id) {
-        return response()->json(['message' => 'You cannot deactivate your own account'], 403);
-    }
+    public function toggleActive(Request $request, User $user): JsonResponse
+    {
+        // Optional: Prevent admin from deactivating self
+        if ($user->id === $request->user()->id) {
+            return ApiResponse::forbidden('You cannot deactivate your own account');
+        }
 
-    // Flip the boolean
-    $user->is_active = !$user->is_active;
-    $user->save();
+        // Flip the boolean
+        $user->is_active = !$user->is_active;
+        $user->save();
 
-    return response()->json([
-        'message' => $user->is_active
+        $message = $user->is_active
             ? "{$user->name} has been activated"
-            : "{$user->name} has been deactivated",
-        'user' => $user->refresh(),
-    ]);
-}
-public function getPreferences()
-{
-    $user = auth()->user();
+            : "{$user->name} has been deactivated";
 
-    // Get or create default preferences for this user
-    $preference = $user->preference ?? $user->preference()->create([
-        'daily_digest_enabled' => false,
-        'digest_time' => '06:00:00',
-    ]);
+        return ApiResponse::success(
+            new UserResource($user->refresh()),
+            $message
+        );
+    }
+    public function getPreferences(Request $request): JsonResponse
+    {
+        $user = $request->user();
 
-    return response()->json([
-        'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
-        'digest_time' => substr($preference->digest_time, 0, 5), // HH:MM
-    ]);
-}
+        // Get or create default preferences for this user
+        $preference = $user->preference ?? $user->preference()->create([
+            'daily_digest_enabled' => false,
+            'digest_time' => '06:00:00',
+        ]);
 
-public function updatePreferences(Request $request)
-{
-    $validated = $request->validate([
-        'daily_digest_enabled' => 'required|boolean',
-        'digest_time' => 'required|date_format:H:i',
-    ]);
+        return ApiResponse::success([
+            'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
+            'digest_time' => substr($preference->digest_time, 0, 5), // HH:MM
+        ], 'Preferences retrieved successfully');
+    }
 
-    $preference = auth()->user()->preference()->updateOrCreate(
-        ['user_id' => auth()->id()],
-        [
-            'daily_digest_enabled' => $validated['daily_digest_enabled'],
-            'digest_time' => $validated['digest_time'] . ':00',
-        ]
-    );
+    public function updatePreferences(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'daily_digest_enabled' => 'required|boolean',
+            'digest_time' => 'required|date_format:H:i',
+        ]);
 
-    return response()->json([
-        'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
-        'digest_time' => substr($preference->digest_time, 0, 5),
-    ]);
-}
+        $user = $request->user();
+        $preference = $user->preference()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'daily_digest_enabled' => $validated['daily_digest_enabled'],
+                'digest_time' => $validated['digest_time'] . ':00',
+            ]
+        );
 
-
+        return ApiResponse::success([
+            'daily_digest_enabled' => (bool) $preference->daily_digest_enabled,
+            'digest_time' => substr($preference->digest_time, 0, 5),
+        ], 'Preferences updated successfully');
+    }
 }
