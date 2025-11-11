@@ -26,8 +26,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/tasks/{task}/attachments/{attachment}', [TaskController::class, 'destroyAttachment']);
 
             //Preferences routes
-            Route::get('/user/preferences',[UserController::class, 'getPreferences']);
-            Route::put('/user/preferences',[UserController::class, 'updatePreferences']);//group this
+           Route::prefix('user/preferences')->group(function () {
+                Route::get('/', [UserController::class, 'getPreferences']);
+                Route::put('/', [UserController::class, 'updatePreferences']);
+            });
 
             // Admin routes
             Route::middleware('admin')->group(function () {
