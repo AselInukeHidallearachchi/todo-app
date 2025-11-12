@@ -57,6 +57,12 @@ export default function NewTaskPage() {
       return;
     }
 
+    if (!form.due_date) {
+      setError("Due date is required");
+      setLoading(false);
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
 

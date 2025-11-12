@@ -19,7 +19,6 @@ class CreateTaskRequest extends FormRequest
             'due_date' => 'nullable|date',
             'status' => 'sometimes|in:todo,in_progress,completed',
             'priority' => 'sometimes|in:low,medium,high,urgent',
-            'due_date' => 'nullable|date'
 
         ];
     }
