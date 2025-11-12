@@ -30,7 +30,7 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
         case "in_progress":
           return "info";
         default:
-          return "secondary";
+          return "default";
       }
     }
     if (type === "priority") {
@@ -42,10 +42,10 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
         case "low":
           return "success";
         default:
-          return "secondary";
+          return "default";
       }
     }
-    return "secondary";
+    return "default";
   };
 
   const getIcon = (type: "status" | "priority", value: string) => {
