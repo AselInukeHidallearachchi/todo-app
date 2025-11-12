@@ -11,6 +11,7 @@ import { TaskPagination } from "./components/TaskPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Task, PaginationMeta } from "@/types/task";
 import { PaginatedApiResponse } from "@/types/api";
+import { UnifiedAlert } from "@/components/UnifiedAlert";
 
 export default function TaskListPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function TaskListPage() {
   const [sortBy, setSortBy] = useState("recent");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -73,18 +77,29 @@ export default function TaskListPage() {
   };
 
   const deleteTask = async (id: number) => {
-    if (!window.confirm("Delete this task?")) return;
+    setTaskToDelete(id);
+    setDeleteOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!taskToDelete) return;
+
+    setDeleting(true);
+    setDeleteOpen(false);
     try {
-      await api.delete(`/tasks/${id}`);
+      await api.delete(`/tasks/${taskToDelete}`);
 
-      setTasks((prev) => prev.filter((t) => t.id !== id));
+      setTasks((prev) => prev.filter((t) => t.id !== taskToDelete));
 
       if (tasks.length === 1 && currentPage > 1 && pagination) {
         fetchTasks(currentPage - 1);
       }
+      setTaskToDelete(null);
     } catch (error) {
       console.error("Error deleting task:", error);
+      setTaskToDelete(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -128,6 +143,18 @@ export default function TaskListPage() {
           )}
         </>
       )}
+
+      <UnifiedAlert
+        type="confirm"
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleConfirmDelete}
+        isLoading={deleting}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

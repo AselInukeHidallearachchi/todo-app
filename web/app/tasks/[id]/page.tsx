@@ -27,6 +27,8 @@ import {
   Trash2,
   Edit,
 } from "lucide-react";
+import { UnifiedAlert } from "@/components/UnifiedAlert";
+
 import { TaskAttachments } from "@/app/components/task/task-attachments";
 import { deleteTaskAttachment } from "@/lib/api";
 
@@ -55,6 +57,9 @@ export default function TaskDetailPage() {
   const [originalAttachments, setOriginalAttachments] = useState<
     Task["attachments"]
   >([]);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchTask();
@@ -152,17 +157,18 @@ export default function TaskDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
-
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
 
+    setDeleting(true);
+    setDeleteOpen(false);
     try {
       await api.delete(`/tasks/${taskId}`);
       router.push("/tasks");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || "Failed to delete task");
+      setDeleting(false);
     }
   };
 
@@ -278,28 +284,27 @@ export default function TaskDetailPage() {
                 Cancel
               </Button>
             )}
-            <Button
-              onClick={isEditing ? handleSave : () => handleDelete()}
-              className={
-                isEditing
-                  ? "gap-2"
-                  : "gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-              }
-              variant={isEditing ? "default" : "outline"}
-              disabled={saving}
-            >
-              {isEditing ? (
-                <>
-                  <Save className="h-4 w-4" />
-                  {saving ? "Saving..." : "Save"}
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </>
-              )}
-            </Button>
+            {!isEditing ? (
+              <Button
+                onClick={() => setDeleteOpen(true)}
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                variant="outline"
+                disabled={deleting}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSave}
+                className="gap-2"
+                variant="default"
+                disabled={saving}
+              >
+                <Save className="h-4 w-4" />
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -553,6 +558,18 @@ export default function TaskDetailPage() {
             </div>
           )}
         </Card>
+
+        <UnifiedAlert
+          type="confirm"
+          title="Delete Task"
+          message="Are you sure you want to delete this task? This action cannot be undone."
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onConfirm={handleDelete}
+          isLoading={deleting}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );
