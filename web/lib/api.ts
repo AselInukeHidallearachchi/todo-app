@@ -1,3 +1,4 @@
+import { TaskStatsResponse } from "@/types/api";
 import axios from "axios";
 
 // Types for API responses
@@ -54,7 +55,10 @@ api.interceptors.response.use(
 );
 
 // File upload helper function
-export const uploadTaskAttachment = async (taskId: number, file: File) => {
+export const uploadTaskAttachment = async (
+  taskId: number,
+  file: File
+): Promise<any> => {
   const token = localStorage.getItem("token");
   const formData = new FormData();
   formData.append("file", file, file.name);
@@ -66,7 +70,8 @@ export const uploadTaskAttachment = async (taskId: number, file: File) => {
     },
   });
 
-  return response.data;
+  // Backend returns: { success, message, data: Attachment }
+  return response.data?.data || response.data;
 };
 
 // Delete attachment helper function
@@ -74,21 +79,13 @@ export const deleteTaskAttachment = async (
   taskId: number,
   attachmentId: number
 ) => {
-  const token = localStorage.getItem("token");
-  await api.delete(`/tasks/${taskId}/attachments/${attachmentId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  await api.delete(`/tasks/${taskId}/attachments/${attachmentId}`);
 };
 
 // Fetch task statistics for the logged-in user
 export const fetchTaskStatistics = async (): Promise<TaskStats> => {
-  const token = localStorage.getItem("token");
-  const response = await api.get<TaskStats>("/tasks-statistics", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  const response = await api.get<TaskStatsResponse>("/tasks-statistics");
+  return response.data.data;
 };
 
 // Small typed helpers for consistent API usage across the app.

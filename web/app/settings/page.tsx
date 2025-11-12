@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { PreferencesResponse } from "@/types/api";
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState({
@@ -24,8 +25,9 @@ export default function SettingsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get("/user/preferences");
-        setPreferences(res.data as typeof preferences);
+        const res = await api.get<PreferencesResponse>("/user/preferences");
+        // Backend returns: { success, message, data: preferences }
+        setPreferences(res.data.data);
       } catch {
         setMsg({ type: "error", text: "Failed to load preferences" });
       }

@@ -19,18 +19,12 @@ import {
   Check,
 } from "lucide-react";
 import Link from "next/link";
+import { AuthApiResponse } from "@/types/api";
 
 interface PasswordStrength {
   score: number;
   feedback: string;
   color: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
 }
 
 export default function RegisterPage() {
@@ -101,8 +95,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await api.post("/auth/register", form);
-      const { token, user } = res.data as { token: string; user: User };
+      const res = await api.post<AuthApiResponse>("/auth/register", form);
+      const { token, user } = res.data.data;
       setUser(user, token);
       router.push("/");
     } catch (err: unknown) {

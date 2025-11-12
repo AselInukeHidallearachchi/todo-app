@@ -18,6 +18,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import { AuthApiResponse } from "@/types/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,11 +45,8 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await api.post("/auth/login", form);
-      const { token, user } = res.data as {
-        token: string;
-        user: { id: number; name: string; email: string; role: string };
-      };
+      const res = await api.post<AuthApiResponse>("/auth/login", form);
+      const { token, user } = res.data.data;
       setUser(user, token);
       router.push("/");
     } catch (err: unknown) {

@@ -31,6 +31,7 @@ import { TaskAttachments } from "@/app/components/task/task-attachments";
 import { deleteTaskAttachment } from "@/lib/api";
 
 import type { Task as TaskType } from "@/types/task";
+import { SingleResourceResponse } from "@/types/api";
 type Task = TaskType;
 
 export default function TaskDetailPage() {
@@ -65,10 +66,10 @@ export default function TaskDetailPage() {
     if (!token) return router.push("/login");
 
     try {
-      const res = await api.get(`/tasks/${taskId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = res.data as Task;
+      const res = await api.get<SingleResourceResponse<Task>>(
+        `/tasks/${taskId}`
+      );
+      const data = res.data.data;
       setTask(data);
       setForm(data);
     } catch {
@@ -157,9 +158,7 @@ export default function TaskDetailPage() {
     if (!token) return router.push("/login");
 
     try {
-      await api.delete(`/tasks/${taskId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/tasks/${taskId}`);
       router.push("/tasks");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };

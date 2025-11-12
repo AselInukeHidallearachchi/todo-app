@@ -25,7 +25,9 @@ interface UserContextType {
 }
 
 interface AuthResponse {
-  user: User;
+  success: boolean;
+  message: string;
+  data: User;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -64,7 +66,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       try {
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
         const response = await api.get<AuthResponse>("/auth/me");
-        setUserState(response.data.user);
+        // Backend returns: { success, message, data: User }
+        setUserState(response.data.data);
       } catch {
         clearUser();
       } finally {

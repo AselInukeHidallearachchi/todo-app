@@ -9,7 +9,8 @@ import { TaskCard } from "./components/TaskCard";
 import { EmptyState } from "./components/EmptyState";
 import { TaskPagination } from "./components/TaskPagination";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Task, PaginationMeta, PaginatedResponse } from "@/types/task";
+import { Task, PaginationMeta } from "@/types/task";
+import { PaginatedApiResponse } from "@/types/api";
 
 export default function TaskListPage() {
   const router = useRouter();
@@ -41,15 +42,12 @@ export default function TaskListPage() {
           params.append("search", debouncedSearch.trim());
         }
 
-        //console.log("Fetching tasks with params:", params.toString());
-        const res = await api.get(`/tasks?${params.toString()}`);
+        const res = await api.get<PaginatedApiResponse<Task>>(
+          `/tasks?${params.toString()}`
+        );
 
-        //console.log("API Response:", res.data);
-
-        const response = res.data as PaginatedResponse;
-
-        setTasks(response.data || []);
-        setPagination(response.meta);
+        setTasks(Array.isArray(res.data.data?.data) ? res.data.data.data : []);
+        setPagination((res.data.data?.meta as PaginationMeta) || null);
         setCurrentPage(pageNum);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (error) {
@@ -75,13 +73,10 @@ export default function TaskListPage() {
   };
 
   const deleteTask = async (id: number) => {
-    const token = localStorage.getItem("token");
     if (!window.confirm("Delete this task?")) return;
 
     try {
-      await api.delete(`/tasks/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/tasks/${id}`);
 
       setTasks((prev) => prev.filter((t) => t.id !== id));
 

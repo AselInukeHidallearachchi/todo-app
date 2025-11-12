@@ -16,6 +16,7 @@ import {
   Loader2,
   ArrowLeft,
 } from "lucide-react";
+import { ApiResponse, SingleResourceResponse } from "@/types/api";
 
 interface User {
   id: number;
@@ -44,8 +45,9 @@ export default function AdminUsersPage() {
     setError("");
 
     try {
-      const res = await api.get("/users");
-      setUsers(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<ApiResponse<User[]>>("/users");
+      console.log("users", res);
+      setUsers(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (err: unknown) {
       const error = err as {
         response?: { status?: number; data?: { message?: string } };
@@ -68,10 +70,14 @@ export default function AdminUsersPage() {
     setSuccess("");
 
     try {
-      await api.patch(`/users/${user.id}/role`, { role: newRole });
-      setUsers(
-        users.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
+      const res = await api.patch<SingleResourceResponse<User>>(
+        `/users/${user.id}/role`,
+        {
+          role: newRole,
+        }
       );
+      const updatedUser = res.data.data;
+      setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
       setSuccess(`${user.name}'s role updated to ${newRole}`);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
@@ -88,10 +94,14 @@ export default function AdminUsersPage() {
     setSuccess("");
 
     try {
-      const res = await api.patch(`/users/${user.id}/toggle`);
-      const data = res.data as { user: User; message: string };
-      setUsers(users.map((u) => (u.id === user.id ? data.user : u)));
-      setSuccess(data.message);
+      const res = await api.patch<SingleResourceResponse<User>>(
+        `/users/${user.id}/toggle`
+      );
+      // Backend returns: { success, message, data: User }
+      const updatedUser = res.data.data;
+      const responseMessage = res.data.message;
+      setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
+      setSuccess(responseMessage);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
