@@ -113,7 +113,7 @@ export default function TaskListPage() {
         <EmptyState filter={filterBy} />
       ) : (
         <>
-          <div className="grid gap-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {tasks.map((task) => (
               <TaskCard key={task.id} task={task} onDelete={deleteTask} />
             ))}

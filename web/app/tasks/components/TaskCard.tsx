@@ -65,10 +65,10 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
 
   return (
     <Card
-      className="p-4 hover:shadow-soft-md transition-all duration-200 border-l-4 hover:border-l-primary cursor-pointer group animate-slide-in-up"
+      className="p-4 hover:shadow-soft-md transition-all duration-200 border-l-4 hover:border-l-primary cursor-pointer group animate-slide-in-up flex flex-col h-full"
       onClick={() => router.push(`/tasks/${task.id}`)}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 h-full">
         {/* Task Info */}
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
@@ -111,30 +111,30 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 sm:flex-col">
+        <div className="flex gap-2 w-full">
           <Button
             size="sm"
             variant="outline"
-            className="gap-2"
+            className="gap-2 flex-1"
             onClick={(e) => {
               e.stopPropagation();
               router.push(`/tasks/${task.id}`);
             }}
           >
             <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">View</span>
+            <span>View</span>
           </Button>
           <Button
             size="sm"
             variant="outline"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-1"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(task.id);
             }}
           >
             <Trash2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Delete</span>
+            <span>Delete</span>
           </Button>
         </div>
       </div>
