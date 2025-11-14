@@ -1,101 +1,53 @@
-"use client";
+import { requireAuth } from "@/lib/auth";
+import { serverApi } from "@/lib/api-server";
+import { SettingsClient } from "./components/SettingsClient";
+import type { Metadata } from "next";
 
-import { useState, useEffect } from "react";
-import api from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { PreferencesResponse } from "@/types/api";
+/**
+ * Server Component: Settings Page
+ * Fetches user preferences on the server
+ * Passes data to SettingsClient for interactive form with Server Actions
+ */
 
-export default function SettingsPage() {
-  const [preferences, setPreferences] = useState({
-    daily_digest_enabled: false,
-    digest_time: "06:00",
-  });
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+interface PreferencesData {
+  daily_digest_enabled: boolean;
+  digest_time: string;
+}
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get<PreferencesResponse>("/user/preferences");
-        // Backend returns: { success, message, data: preferences }
-        setPreferences(res.data.data);
-      } catch {
-        setMsg({ type: "error", text: "Failed to load preferences" });
-      }
-    })();
-  }, []);
+interface PreferencesResponse {
+  success: boolean;
+  message: string;
+  data: PreferencesData;
+}
 
-  const save = async () => {
-    setSaving(true);
-    setMsg(null);
-    try {
-      await api.put("/user/preferences", preferences);
-      setMsg({ type: "success", text: "Saved!" });
-    } catch {
-      setMsg({ type: "error", text: "Save failed" });
-    } finally {
-      setSaving(false);
-    }
-  };
+export const metadata: Metadata = {
+  title: "Settings | TaskToDo",
+  description: "Manage your email preferences and notifications",
+};
 
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Email Preferences</h1>
-      <Card className="p-6 space-y-6">
-        {msg && (
-          <Alert variant={msg.type === "error" ? "destructive" : "success"}>
-            {msg.type === "error" ? (
-              <AlertCircle className="h-4 w-4" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            <AlertDescription>{msg.text}</AlertDescription>
-          </Alert>
-        )}
+async function getUserPreferences(): Promise<PreferencesData> {
+  try {
+    const response = await serverApi.get<PreferencesResponse>(
+      "/user/preferences"
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    // Return default preferences if fetch fails
+    return {
+      daily_digest_enabled: false,
+      digest_time: "06:00",
+    };
+  }
+}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className="text-base font-semibold">Daily Task Digest</Label>
-            <p className="text-sm opacity-70">
-              Get a daily email summary of your tasks.
-            </p>
-          </div>
-          <Switch
-            checked={preferences.daily_digest_enabled}
-            onCheckedChange={(v) =>
-              setPreferences((p) => ({ ...p, daily_digest_enabled: v }))
-            }
-          />
-        </div>
+export default async function SettingsPage() {
+  // Server-side auth check
+  await requireAuth();
 
-        {preferences.daily_digest_enabled && (
-          <div className="space-y-2">
-            <Label htmlFor="digest_time">Delivery Time</Label>
-            <Input
-              id="digest_time"
-              type="time"
-              value={preferences.digest_time}
-              onChange={(e) =>
-                setPreferences((p) => ({ ...p, digest_time: e.target.value }))
-              }
-              className="w-44"
-            />
-          </div>
-        )}
+  // Fetch user preferences on the server
+  const preferences = await getUserPreferences();
 
-        <Button onClick={save} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </Card>
-    </div>
-  );
+  // Return client component with server-fetched data
+  return <SettingsClient initialPreferences={preferences} />;
 }
