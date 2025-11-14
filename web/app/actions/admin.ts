@@ -3,11 +3,6 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-/**
- * Server Action: Toggle user role between admin and user
- * Requires admin privileges
- * Automatically revalidates /admin/users page after update
- */
 export async function toggleUserRoleAction(
   userId: number,
   newRole: "admin" | "user"
@@ -63,11 +58,6 @@ export async function toggleUserRoleAction(
   }
 }
 
-/**
- * Server Action: Toggle user active status
- * Requires admin privileges
- * Automatically revalidates /admin/users page after update
- */
 export async function toggleUserStatusAction(userId: number) {
   try {
     const cookieStore = await cookies();

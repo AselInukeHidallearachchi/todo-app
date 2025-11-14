@@ -22,10 +22,6 @@ const getApiBaseUrl = () => {
   );
 };
 
-/**
- * Server-side function to get the current authenticated user
- * This runs on the server and can access cookies securely
- */
 export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
@@ -56,10 +52,6 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
-/**
- * Server-side function to require authentication
- * Redirects to login if not authenticated
- */
 export async function requireAuth(): Promise<User> {
   const user = await getCurrentUser();
 
@@ -78,9 +70,7 @@ export async function getAuthToken(): Promise<string | null> {
   return cookieStore.get("auth-token")?.value || null;
 }
 
-/**
- * Check if user is admin
- */
+//Check if user is admin
 export async function requireAdmin(): Promise<User> {
   const user = await requireAuth();
 

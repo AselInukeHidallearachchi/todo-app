@@ -57,7 +57,6 @@ export async function loginAction(
       },
       body: JSON.stringify({ email, password }),
     });
-    console.log("login response", response);
     if (!response.ok) {
       const error = await response.json();
       return {
