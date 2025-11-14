@@ -1,22 +1,15 @@
-"use client";
-import { useEffect, useState, useCallback } from "react";
-import api from "@/lib/api";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { requireAdmin } from "@/lib/auth";
+import { serverApi } from "@/lib/api-server";
+import { AdminUsersClient } from "./components/AdminUsersClient";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import {
-  AlertCircle,
-  CheckCircle2,
-  Shield,
-  User,
-  Loader2,
-  ArrowLeft,
-} from "lucide-react";
-import { ApiResponse, SingleResourceResponse } from "@/types/api";
+/**
+ * Server Component: Admin Users Management Page
+ * Requires admin role to access (enforced by requireAdmin)
+ * Fetches all users on the server
+ * Passes data to AdminUsersClient for interactive management
+ */
 
 interface User {
   id: number;
@@ -27,341 +20,38 @@ interface User {
   created_at: string;
 }
 
-export default function AdminUsersPage() {
-  const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+interface UsersResponse {
+  success: boolean;
+  data: User[];
+}
 
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+export const metadata: Metadata = {
+  title: "User Management | TaskToDo",
+  description: "Manage users, roles, and permissions",
+};
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await api.get<ApiResponse<User[]>>("/users");
-      console.log("users", res);
-      setUsers(Array.isArray(res.data.data) ? res.data.data : []);
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { status?: number; data?: { message?: string } };
-      };
-      if (error.response?.status === 403) {
-        setError("Access denied — Admin access required");
-        setTimeout(() => router.push("/tasks"), 2000);
-      } else {
-        setError(error.response?.data?.message || "Failed to load users");
-      }
-    } finally {
-      setLoading(false);
+async function getUsers(): Promise<User[]> {
+  try {
+    const response = await serverApi.get<UsersResponse>("/users");
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number } };
+    // If forbidden, redirect to tasks page
+    if (err.response?.status === 403) {
+      redirect("/tasks");
     }
-  }, [router]);
-
-  const toggleRole = async (user: User) => {
-    const newRole = user.role === "admin" ? "user" : "admin";
-    setUpdatingId(user.id);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await api.patch<SingleResourceResponse<User>>(
-        `/users/${user.id}/role`,
-        {
-          role: newRole,
-        }
-      );
-      const updatedUser = res.data.data;
-      setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
-      setSuccess(`${user.name}'s role updated to ${newRole}`);
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || "Failed to update user role");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const toggleActive = async (user: User) => {
-    setUpdatingId(user.id);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await api.patch<SingleResourceResponse<User>>(
-        `/users/${user.id}/toggle`
-      );
-      // Backend returns: { success, message, data: User }
-      const updatedUser = res.data.data;
-      const responseMessage = res.data.message;
-      setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
-      setSuccess(responseMessage);
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || "Failed to toggle user status");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative h-12 w-12">
-            <div className="absolute inset-0 rounded-full border-4 border-muted"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-sm text-muted-foreground">Loading users...</p>
-        </div>
-      </div>
-    );
+    console.error("Error fetching users:", error);
+    return [];
   }
+}
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
+export default async function AdminUsersPage() {
+  // Server-side admin auth check - redirects if not admin
+  await requireAdmin();
 
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-                User Management
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Manage user roles and permissions
-              </p>
-            </div>
+  // Fetch users on the server
+  const users = await getUsers();
 
-            <div className="flex gap-4">
-              <div className="text-right px-4 py-3 bg-card rounded-lg border border-border/50">
-                <p className="text-2xl font-bold text-primary">
-                  {users.length}
-                </p>
-                <p className="text-xs text-muted-foreground">Total Users</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Success Alert */}
-        {success && (
-          <Alert variant="success" className="mb-6">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Users */}
-        {users.length === 0 ? (
-          <Card className="p-12 text-center">
-            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No users found
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              There are no users in the system
-            </p>
-          </Card>
-        ) : (
-          <Card className="overflow-hidden shadow-soft-lg">
-            {/* Table Header (desktop only) */}
-            <div className="hidden md:block bg-card border-b border-border/50 px-6 py-4">
-              <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
-                <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                  User
-                </div>
-                <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                  Email
-                </div>
-                <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                  Role
-                </div>
-                <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                  Status
-                </div>
-                <div className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                  Action
-                </div>
-              </div>
-            </div>
-
-            {/* Table / Cards Body */}
-            <div className="divide-y divide-border/30">
-              {users.map((user) => (
-                <div key={user.id}>
-                  {/* Desktop Row */}
-                  <div className="hidden md:grid px-6 py-4 hover:bg-muted/30 transition-colors duration-200 grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 items-center">
-                    {/* User */}
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                      <p className="font-medium text-foreground truncate">
-                        {user.name}
-                      </p>
-                    </div>
-
-                    {/* Email */}
-                    <p className="text-sm text-muted-foreground truncate">
-                      {user.email}
-                    </p>
-
-                    {/* Role */}
-                    <Badge
-                      variant={user.role === "admin" ? "default" : "secondary"}
-                      className={`gap-1 w-fit ${
-                        user.role === "admin"
-                          ? "bg-destructive hover:bg-destructive/90"
-                          : "hover:bg-primary/90"
-                      }`}
-                    >
-                      <Shield className="h-3 w-3" />
-                      {user.role === "admin" ? "Admin" : "User"}
-                    </Badge>
-
-                    {/* Status */}
-                    <div className="flex items-center gap-2">
-                      {updatingId === user.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : (
-                        <Switch
-                          checked={user.is_active}
-                          onCheckedChange={() => toggleActive(user)}
-                        />
-                      )}
-                      <span
-                        className={`text-sm font-medium ${
-                          user.is_active
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-destructive"
-                        }`}
-                      >
-                        {user.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-
-                    {/* Action */}
-                    <div className="flex justify-left">
-                      <Button
-                        onClick={() => toggleRole(user)}
-                        disabled={updatingId === user.id}
-                        variant={user.role === "admin" ? "outline" : "default"}
-                        size="sm"
-                        className="gap-2"
-                      >
-                        {updatingId === user.id ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="h-3.5 w-3.5" />
-                            Change to {user.role === "admin" ? "User" : "Admin"}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Mobile Card */}
-                  <div className="block md:hidden border-b border-border/30 px-4 py-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant={
-                          user.role === "admin" ? "default" : "secondary"
-                        }
-                        className={`gap-1 ${
-                          user.role === "admin"
-                            ? "bg-destructive hover:bg-destructive/90"
-                            : "hover:bg-primary/90"
-                        }`}
-                      >
-                        <Shield className="h-3 w-3" />
-                        {user.role}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2">
-                        {updatingId === user.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                          <Switch
-                            checked={user.is_active}
-                            onCheckedChange={() => toggleActive(user)}
-                          />
-                        )}
-                        <span
-                          className={`text-sm font-medium ${
-                            user.is_active
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-destructive"
-                          }`}
-                        >
-                          {user.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-
-                      <Button
-                        onClick={() => toggleRole(user)}
-                        size="sm"
-                        disabled={updatingId === user.id}
-                        variant={user.role === "admin" ? "outline" : "default"}
-                      >
-                        {updatingId === user.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : user.role === "admin" ? (
-                          "Make User"
-                        ) : (
-                          "Make Admin"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-      </div>
-    </div>
-  );
+  // Return client component with server-fetched data
+  return <AdminUsersClient users={users} />;
 }
