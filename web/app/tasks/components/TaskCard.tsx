@@ -97,7 +97,11 @@ export function TaskCard({ task, onDelete }: TaskCardProps) {
             {task.due_date && (
               <Badge variant="outline" className="gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(task.due_date).toLocaleDateString()}
+                {new Date(task.due_date).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
               </Badge>
             )}
             {task.attachments && task.attachments.length > 0 && (
