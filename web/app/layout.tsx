@@ -2,11 +2,11 @@ import Navbar from "./components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { ReactNode } from "react";
-import { UserProvider } from "@/context/UserContext";
 
 export const metadata = {
-  title: "Todo App",
-  description: "Full-stack Todo App using Laravel + Next.js",
+  title: "TaskToDo - Manage Your Tasks Efficiently",
+  description:
+    "A modern task management application built with Next.js and Laravel",
 };
 
 export default function RootLayout({
@@ -21,10 +21,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider>
-            <Navbar />
-            <main className="flex-1 container mx-auto p-4">{children}</main>
-          </UserProvider>
+          <Navbar />
+          <main className="flex-1 container mx-auto p-4">{children}</main>
         </ThemeProvider>
       </body>
     </html>
