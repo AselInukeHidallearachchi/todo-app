@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import api from "@/lib/api";
-import { useRouter } from "next/navigation";
-import { useUser } from "@/context/UserContext";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,57 +17,62 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { AuthApiResponse } from "@/types/api";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+function SubmitButton({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      disabled={pending || !email || !password}
+      className="w-full h-10 gap-2 shadow-soft-md hover:shadow-soft-lg transition-shadow mt-6"
+    >
+      {pending ? (
+        <>
+          <Loader className="h-4 w-4 animate-spin" />
+          Signing in...
+        </>
+      ) : (
+        <>
+          Sign in
+          <ArrowRight className="h-4 w-4" />
+        </>
+      )}
+    </Button>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useUser();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [state, formAction] = useActionState(loginAction, null);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    if (!form.email || !form.password) {
-      setError("Please fill in all fields");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await api.post<AuthApiResponse>("/auth/login", form);
-      const { token, user } = res.data.data;
-      setUser(user, token);
+  // Redirect on successful login
+  useEffect(() => {
+    if (state?.success) {
       router.push("/");
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      router.refresh();
     }
-  };
+  }, [state, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex p-3 bg-primary/10 rounded-xl mb-4">
             <CheckCircle2 className="h-8 w-8 text-primary" />
@@ -82,15 +86,14 @@ export default function LoginPage() {
         </div>
 
         <Card className="p-6 shadow-soft-xl border-border/40">
-          {error && (
+          {state && !state.success && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{state.message}</AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
+          <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold">
                 Email
@@ -100,15 +103,14 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="you@example.com"
-                value={form.email}
-                onChange={handleChange}
-                disabled={loading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-10"
                 autoFocus
+                required
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-semibold">
                 Password
@@ -119,16 +121,15 @@ export default function LoginPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={form.password}
-                  onChange={handleChange}
-                  disabled={loading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="h-10 pr-10"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -139,24 +140,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={loading || !form.email || !form.password}
-              className="w-full h-10 gap-2 shadow-soft-md hover:shadow-soft-lg transition-shadow mt-6"
-            >
-              {loading ? (
-                <>
-                  <Loader className="h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+            <SubmitButton email={email} password={password} />
           </form>
 
           {/* Divider */}
