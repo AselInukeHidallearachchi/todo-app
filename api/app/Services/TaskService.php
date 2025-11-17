@@ -26,6 +26,11 @@ class TaskService
             $query->where('status', $filters['status']);
         }
 
+        // Priority filter
+        if (!empty($filters['priority'])) {
+            $query->where('priority', $filters['priority']);
+        }
+
         //Search filter 
         if(!empty($filters['search'])){
             $search = trim($filters['search']);

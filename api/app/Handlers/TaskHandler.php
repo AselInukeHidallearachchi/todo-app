@@ -25,6 +25,7 @@ class TaskHandler
         try {
             $filters = [
                 'status' => $request->query('status'),
+                'priority' => $request->query('priority'),
                 'sort' => $request->query('sort'),
                 'search' => $request->query('search'),
                 'page' => (int) $request->query('page', 1),
