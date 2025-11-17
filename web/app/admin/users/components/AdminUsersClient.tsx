@@ -295,9 +295,7 @@ export function AdminUsersClient({
                         </div>
                       </div>
                       <Badge
-                        variant={
-                          user.role === "admin" ? "default" : "secondary"
-                        }
+                        variant={user.role === "admin" ? "default" : "outline"}
                         className={`gap-1 ${
                           user.role === "admin"
                             ? "bg-destructive hover:bg-destructive/90"

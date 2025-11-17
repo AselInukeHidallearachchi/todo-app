@@ -197,7 +197,7 @@ export function NewTaskClient() {
                       </Badge>
                     </SelectItem>
                     <SelectItem value={PRIORITY_LABELS.MEDIUM}>
-                      <Badge variant="secondary" className="gap-2">
+                      <Badge variant="outline" className="gap-2">
                         Medium Priority
                       </Badge>
                     </SelectItem>
@@ -280,12 +280,10 @@ export function NewTaskClient() {
                   </p>
                 )}
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant="secondary">
+                  <Badge variant="outline">
                     {form.status.replace("_", " ").toUpperCase()}
                   </Badge>
-                  <Badge variant="secondary">
-                    {form.priority.toUpperCase()}
-                  </Badge>
+                  <Badge variant="outline">{form.priority.toUpperCase()}</Badge>
                   {form.due_date && (
                     <Badge variant="outline">
                       {new Date(form.due_date).toLocaleDateString("en-US", {

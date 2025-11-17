@@ -439,7 +439,7 @@ export function TaskDetailClient({
                     <p className="text-xs font-semibold text-muted-foreground mb-2">
                       STATUS
                     </p>
-                    <Badge variant="secondary">
+                    <Badge variant="outline">
                       {task.status.replace("_", " ").toUpperCase()}
                     </Badge>
                   </div>
@@ -456,7 +456,7 @@ export function TaskDetailClient({
                           ? "warning"
                           : task.priority === "low"
                           ? "success"
-                          : "secondary"
+                          : "outline"
                       }
                     >
                       {task.priority.toUpperCase()}

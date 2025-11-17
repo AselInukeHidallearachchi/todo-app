@@ -243,7 +243,7 @@ export function TaskAttachments({
                   <div className="flex items-center gap-2 flex-1">
                     <Paperclip className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <Badge
-                      variant="secondary"
+                      variant="outline"
                       className="h-auto py-1 px-2 font-normal"
                     >
                       {file.original_name}
