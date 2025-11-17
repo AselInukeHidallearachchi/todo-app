@@ -33,16 +33,5 @@ export interface PaginationMeta {
   total: number;
 }
 
-export interface PaginatedResponse {
-  data: Task[];
-  links: {
-    first: string | null;
-    last: string | null;
-    prev: string | null;
-    next: string | null;
-  };
-  meta: PaginationMeta;
-}
-
 export type SortOption = "recent" | "priority" | "status" | "due-date";
 export type FilterOption = "all" | "todo" | "in_progress" | "completed";

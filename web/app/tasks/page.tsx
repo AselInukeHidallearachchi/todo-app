@@ -1,13 +1,7 @@
-import { Metadata } from "next";
 import { requireAuth } from "@/lib/auth";
 import { TasksClient } from "./components/TasksClient";
 import { apiServer } from "@/lib/api-server";
 import { Task } from "@/types/task";
-
-export const metadata: Metadata = {
-  title: "My Tasks | TaskToDo",
-  description: "View and manage all your tasks",
-};
 
 interface PaginationMeta {
   current_page: number;
@@ -19,7 +13,7 @@ interface PaginationMeta {
   path: string;
 }
 
-// Backend returns this structure (wrapped in success object)
+// Backend returns this structure
 interface BackendResponse {
   success: boolean;
   message: string;
@@ -60,22 +54,8 @@ async function getTasksWithFilters(
     const queryString = params.toString();
     const endpoint = queryString ? `/tasks?${queryString}` : "/tasks";
 
-    console.log("🟢 [Server] Fetching tasks with endpoint:", endpoint);
-    console.log("🟢 [Server] Page param from searchParams:", searchParams.page);
-    console.log("🟢 [Server] Full search params:", searchParams);
-
     // Backend returns wrapped response
     const response = await apiServer<BackendResponse>(endpoint);
-
-    console.log("🟢 [Server] Response received:", {
-      success: response.success,
-      totalTasks: response.data.total,
-      currentPage: response.data.current_page,
-      lastPage: response.data.last_page,
-      tasksCount: response.data.data.length,
-      from: response.data.from,
-      to: response.data.to,
-    });
 
     // Extract the nested data object
     const tasksData = response.data;
@@ -115,8 +95,6 @@ export default async function TaskListPage({
   await requireAuth();
 
   const params = await searchParams;
-
-  console.log("📋 [Server Component] Rendering with params:", params);
 
   const { tasks, pagination } = await getTasksWithFilters(params);
 

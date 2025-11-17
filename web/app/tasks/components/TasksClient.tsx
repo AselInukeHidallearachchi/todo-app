@@ -34,7 +34,6 @@ interface TasksClientProps {
 /**
  * Client Component: Tasks List with Filters
  * Manages URL-based filtering, searching, and pagination
- * Updates URL params to enable shareable filtered views
  */
 export function TasksClient({
   initialTasks,
@@ -45,7 +44,6 @@ export function TasksClient({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Local state for immediate UI feedback
   const [searchInput, setSearchInput] = useState(initialFilters.search);
 
   // Delete confirmation state
@@ -64,9 +62,6 @@ export function TasksClient({
   ) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    console.log("🔵 [Client] updateFilters called with:", updates);
-    console.log("🔵 [Client] Current searchParams:", searchParams.toString());
-
     // Update each filter
     Object.entries(updates).forEach(([key, value]) => {
       if (key === "page") {
@@ -81,13 +76,12 @@ export function TasksClient({
       }
     });
 
-    // Reset to page 1 when filters change (unless we're explicitly setting page)
+    // Reset to page 1 when filters change
     if (!updates.hasOwnProperty("page")) {
       params.delete("page");
     }
 
     const newUrl = `/tasks?${params.toString()}`;
-    console.log("🔵 [Client] Final URL:", newUrl);
 
     startTransition(() => {
       router.push(newUrl);
@@ -104,18 +98,11 @@ export function TasksClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
-  /**
-   * Handle search input change
-   */
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
   };
 
-  /**
-   * Handle pagination
-   */
   const handlePageChange = (page: number) => {
-    console.log("🔵 [Client] Pagination clicked - changing to page:", page);
     console.log(
       "🔵 [Client] Current page from initialPagination:",
       initialPagination.current_page
@@ -123,17 +110,11 @@ export function TasksClient({
     updateFilters({ page });
   };
 
-  /**
-   * Handle delete button click - opens confirmation dialog
-   */
   const handleDeleteClick = (taskId: number) => {
     setTaskToDelete(taskId);
     setDeleteOpen(true);
   };
 
-  /**
-   * Handle confirmed deletion
-   */
   const handleConfirmDelete = async () => {
     if (!taskToDelete) return;
 
@@ -176,10 +157,9 @@ export function TasksClient({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ✅ 1. Task Header with Count */}
       <TaskHeader taskCount={initialPagination.total} />
 
-      {/* ✅ 2. Filters Section */}
+      {/* 2. Filters Section */}
       <div className="bg-card border rounded-lg p-4 space-y-4 shadow-soft">
         {/* Search Bar with Auto-complete */}
         <SearchInput
@@ -240,14 +220,14 @@ export function TasksClient({
         </div>
       </div>
 
-      {/* ✅ 4. Loading State */}
+      {/* 4. Loading State */}
       {isPending && (
         <div className="flex justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
 
-      {/* ✅ 5. Tasks Grid or Empty State */}
+      {/* 5. Tasks Grid or Empty State */}
       {!isPending && (
         <>
           {initialTasks.length === 0 ? (
@@ -264,7 +244,7 @@ export function TasksClient({
             </div>
           )}
 
-          {/* ✅ 6. Task Pagination Component */}
+          {/*6. Task Pagination Component */}
           <TaskPagination
             pagination={initialPagination}
             onPageChange={handlePageChange}
@@ -273,7 +253,7 @@ export function TasksClient({
         </>
       )}
 
-      {/* ✅ 7. UnifiedAlert for Delete Confirmation */}
+      {/* 7. UnifiedAlert for Delete Confirmation */}
       <UnifiedAlert
         type="confirm"
         title="Delete Task"

@@ -25,14 +25,6 @@ export function TaskPagination({
 }: TaskPaginationProps) {
   const { current_page, last_page, total, from, to } = pagination;
 
-  console.log("📄 [Pagination Component] Received pagination data:", {
-    current_page,
-    last_page,
-    total,
-    from,
-    to,
-  });
-
   // Generate page numbers with "..." in between
   const getPageNumbers = () => {
     const delta = 2; // How many pages to show around current page
@@ -93,10 +85,6 @@ export function TaskPagination({
               <PaginationPrevious
                 onClick={() => {
                   if (current_page > 1 && !isLoading) {
-                    console.log(
-                      "📄 [Pagination] Previous clicked - going to page:",
-                      current_page - 1
-                    );
                     onPageChange(current_page - 1);
                   }
                 }}
@@ -117,10 +105,6 @@ export function TaskPagination({
                   <PaginationLink
                     onClick={() => {
                       if (!isLoading) {
-                        console.log(
-                          "📄 [Pagination] Page number clicked:",
-                          page
-                        );
                         onPageChange(page as number);
                       }
                     }}
@@ -142,10 +126,6 @@ export function TaskPagination({
               <PaginationNext
                 onClick={() => {
                   if (current_page < last_page && !isLoading) {
-                    console.log(
-                      "📄 [Pagination] Next clicked - going to page:",
-                      current_page + 1
-                    );
                     onPageChange(current_page + 1);
                   }
                 }}

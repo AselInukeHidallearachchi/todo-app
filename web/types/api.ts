@@ -8,25 +8,6 @@ export interface ApiResponse<T = unknown> {
   errors?: Record<string, string[]>;
 }
 
-/**
- * Paginated API Response
- */
-export interface PaginatedApiResponse<T = unknown> {
-  success: boolean;
-  message: string;
-  data: {
-    data: T[];
-    meta: {
-      current_page: number;
-      per_page: number;
-      total: number;
-      last_page: number;
-      from: number;
-      to: number;
-    };
-  };
-}
-
 export interface AuthApiResponse {
   success: boolean;
   message: string;
