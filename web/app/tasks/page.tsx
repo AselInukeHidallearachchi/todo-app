@@ -1,79 +1,105 @@
+import { Metadata } from "next";
 import { requireAuth } from "@/lib/auth";
-import { serverApi } from "@/lib/api-server";
 import { TasksClient } from "./components/TasksClient";
-import type { Metadata } from "next";
-import { Task, PaginationMeta } from "@/types/task";
-import { PaginatedApiResponse } from "@/types/api";
-
-/**
- * Server Component: Tasks List Page
- * Fetches tasks on the server based on search params (filters, search, pagination)
- * Passes data to TasksClient for client-side interactivity
- * Supports shareable URLs with filters (e.g., /tasks?filter=completed&search=report)
- */
+import { apiServer } from "@/lib/api-server";
+import { Task } from "@/types/task";
 
 export const metadata: Metadata = {
-  title: "Tasks | TaskToDo",
-  description: "Manage and organize your tasks",
+  title: "My Tasks | TaskToDo",
+  description: "View and manage all your tasks",
 };
 
-interface TasksPageProps {
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number;
+  to: number;
+  path: string;
+}
+
+// Backend returns this structure (wrapped in success object)
+interface BackendResponse {
+  success: boolean;
+  message: string;
+  data: {
+    data: Task[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+    path: string;
+  };
+}
+
+interface TaskListPageProps {
   searchParams: Promise<{
-    filter?: string;
-    sort?: string;
-    search?: string;
     page?: string;
+    status?: string;
+    priority?: string;
+    search?: string;
   }>;
 }
 
-async function getTasks(filters: {
-  filterBy: string;
-  sortBy: string;
-  searchQuery: string;
-  page: number;
-}): Promise<{ tasks: Task[]; pagination: PaginationMeta }> {
+async function getTasksWithFilters(
+  searchParams: Awaited<TaskListPageProps["searchParams"]>
+): Promise<{ tasks: Task[]; pagination: PaginationMeta }> {
   try {
     const params = new URLSearchParams();
-    params.append("page", filters.page.toString());
-    params.append("per_page", "15");
 
-    if (filters.filterBy !== "all") {
-      params.append("status", filters.filterBy);
-    }
-    if (filters.sortBy === "priority") {
-      params.append("sort", "priority");
-    }
-    if (filters.sortBy === "due-date") {
-      params.append("sort", "due_date");
-    }
-    if (filters.searchQuery && filters.searchQuery.trim()) {
-      params.append("search", filters.searchQuery.trim());
-    }
+    if (searchParams.page) params.set("page", searchParams.page);
+    if (searchParams.status && searchParams.status !== "all")
+      params.set("status", searchParams.status);
+    if (searchParams.priority && searchParams.priority !== "all")
+      params.set("priority", searchParams.priority);
+    if (searchParams.search) params.set("search", searchParams.search);
 
-    const response = await serverApi.get<PaginatedApiResponse<Task>>(
-      `/tasks?${params.toString()}`
-    );
+    const queryString = params.toString();
+    const endpoint = queryString ? `/tasks?${queryString}` : "/tasks";
+
+    console.log("🟢 [Server] Fetching tasks with endpoint:", endpoint);
+    console.log("🟢 [Server] Page param from searchParams:", searchParams.page);
+    console.log("🟢 [Server] Full search params:", searchParams);
+
+    // Backend returns wrapped response
+    const response = await apiServer<BackendResponse>(endpoint);
+
+    console.log("🟢 [Server] Response received:", {
+      success: response.success,
+      totalTasks: response.data.total,
+      currentPage: response.data.current_page,
+      lastPage: response.data.last_page,
+      tasksCount: response.data.data.length,
+      from: response.data.from,
+      to: response.data.to,
+    });
+
+    // Extract the nested data object
+    const tasksData = response.data;
 
     return {
-      tasks: Array.isArray(response.data?.data) ? response.data.data : [],
-      pagination: (response.data?.meta as PaginationMeta) || {
-        current_page: 1,
-        last_page: 1,
-        per_page: 15,
-        total: 0,
-        from: 0,
-        to: 0,
-        path: "/tasks",
+      tasks: tasksData.data || [],
+      pagination: {
+        current_page: tasksData.current_page || 1,
+        last_page: tasksData.last_page || 1,
+        per_page: tasksData.per_page || 10,
+        total: tasksData.total || 0,
+        from: tasksData.from || 0,
+        to: tasksData.to || 0,
+        path: tasksData.path || "/tasks",
       },
     };
   } catch (error) {
-    console.error("Error fetching tasks:", error);
+    console.error("❌ [Server] Failed to fetch tasks:", error);
     return {
       tasks: [],
       pagination: {
         current_page: 1,
         last_page: 1,
-        per_page: 15,
+        per_page: 10,
         total: 0,
         from: 0,
         to: 0,
@@ -83,31 +109,35 @@ async function getTasks(filters: {
   }
 }
 
-export default async function TaskListPage({ searchParams }: TasksPageProps) {
-  // Server-side auth check
+export default async function TaskListPage({
+  searchParams,
+}: TaskListPageProps) {
   await requireAuth();
 
-  // Parse search params
   const params = await searchParams;
-  const filterBy = params.filter || "all";
-  const sortBy = params.sort || "recent";
-  const searchQuery = params.search || "";
-  const page = parseInt(params.page || "1", 10);
 
-  // Fetch tasks on the server
-  const { tasks, pagination } = await getTasks({
-    filterBy,
-    sortBy,
-    searchQuery,
-    page,
+  console.log("📋 [Server Component] Rendering with params:", params);
+
+  const { tasks, pagination } = await getTasksWithFilters(params);
+
+  console.log("📋 [Server Component] Passing to client:", {
+    tasksCount: tasks.length,
+    filters: {
+      status: params.status || "all",
+      priority: params.priority || "all",
+      search: params.search || "",
+    },
   });
 
-  // Return client component with server-fetched data
   return (
     <TasksClient
       initialTasks={tasks}
       initialPagination={pagination}
-      initialFilters={{ filterBy, sortBy, searchQuery, page }}
+      initialFilters={{
+        status: params.status || "all",
+        priority: params.priority || "all",
+        search: params.search || "",
+      }}
     />
   );
 }
