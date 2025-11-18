@@ -304,12 +304,26 @@ export function TaskDetailClient({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={PRIORITY_LABELS.LOW}>Low</SelectItem>
-                      <SelectItem value={PRIORITY_LABELS.MEDIUM}>
-                        Medium
+                      <SelectItem value={PRIORITY_LABELS.LOW}>
+                        <Badge variant="success" className="gap-2">
+                          Low Priority
+                        </Badge>
                       </SelectItem>
-                      <SelectItem value={PRIORITY_LABELS.HIGH}>High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value={PRIORITY_LABELS.MEDIUM}>
+                        <Badge variant="outline" className="gap-2">
+                          Medium Priority
+                        </Badge>
+                      </SelectItem>
+                      <SelectItem value={PRIORITY_LABELS.HIGH}>
+                        <Badge variant="warning" className="gap-2">
+                          High Priority
+                        </Badge>
+                      </SelectItem>
+                      <SelectItem value="urgent">
+                        <Badge variant="destructive" className="gap-2">
+                          Urgent
+                        </Badge>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -329,12 +343,20 @@ export function TaskDetailClient({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={STATUS_LABELS.TODO}>To Do</SelectItem>
+                      <SelectItem value={STATUS_LABELS.TODO}>
+                        <Badge variant="outline" className="gap-2">
+                          To Do
+                        </Badge>
+                      </SelectItem>
                       <SelectItem value={STATUS_LABELS["IN PROGRESS"]}>
-                        In Progress
+                        <Badge variant="info" className="gap-2">
+                          In Progress
+                        </Badge>
                       </SelectItem>
                       <SelectItem value={STATUS_LABELS.COMPLETED}>
-                        Completed
+                        <Badge variant="success" className="gap-2">
+                          Completed
+                        </Badge>
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -413,7 +435,17 @@ export function TaskDetailClient({
                     <p className="text-xs font-semibold text-muted-foreground mb-2">
                       STATUS
                     </p>
-                    <Badge variant="outline">
+                    <Badge
+                      variant={
+                        task.status === "completed"
+                          ? "success"
+                          : task.status === "in_progress"
+                          ? "info"
+                          : task.status === "todo"
+                          ? "outline"
+                          : "outline"
+                      }
+                    >
                       {task.status.replace("_", " ").toUpperCase()}
                     </Badge>
                   </div>

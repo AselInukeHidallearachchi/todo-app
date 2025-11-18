@@ -204,12 +204,20 @@ export function NewTaskClient() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={STATUS_LABELS.TODO}>To Do</SelectItem>
+                    <SelectItem value={STATUS_LABELS.TODO}>
+                      <Badge variant="outline" className="gap-2">
+                        To Do
+                      </Badge>
+                    </SelectItem>
                     <SelectItem value={STATUS_LABELS["IN PROGRESS"]}>
-                      In Progress
+                      <Badge variant="info" className="gap-2">
+                        In Progress
+                      </Badge>
                     </SelectItem>
                     <SelectItem value={STATUS_LABELS.COMPLETED}>
-                      Completed
+                      <Badge variant="success" className="gap-2">
+                        Completed
+                      </Badge>
                     </SelectItem>
                   </SelectContent>
                 </Select>
