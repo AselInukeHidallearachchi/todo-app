@@ -7,18 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  Loader,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  CheckCircle2,
-} from "lucide-react";
+import { Loader, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useActionToast } from "@/hooks/useActionToast";
 
 function SubmitButton({
   email,
@@ -57,13 +50,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect on successful login
-  useEffect(() => {
-    if (state?.success) {
+  // Skip success toast to make login feel faster
+  useActionToast(state, {
+    successTitle: "Login Successful!",
+    successDescription: "Welcome back.",
+    onSuccess: () => {
       router.push("/");
       router.refresh();
-    }
-  }, [state, router]);
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -86,13 +81,6 @@ export default function LoginPage() {
         </div>
 
         <Card className="p-6 shadow-soft-xl border-border/40">
-          {state && !state.success && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{state.message}</AlertDescription>
-            </Alert>
-          )}
-
           <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold">

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -18,19 +17,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle2,
-  Save,
-  Trash2,
-  Edit,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Save, Trash2, Edit } from "lucide-react";
 import { UnifiedAlert } from "@/components/UnifiedAlert";
 import { TaskAttachments } from "@/app/components/task/task-attachments";
 import { deleteTaskAttachment } from "@/lib/api";
 import { updateTaskAction, deleteTaskAction } from "@/app/actions/tasks";
 import type { Task } from "@/types/task";
+import { useToast } from "@/context/ToastContext";
 
 /**
  * Client Component: Task Detail Interactive Wrapper
@@ -49,14 +42,13 @@ export function TaskDetailClient({
   taskId,
 }: TaskDetailClientProps) {
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   // Task state
   const [task, setTask] = useState<Task>(initialTask);
   const [form, setForm] = useState<Task>(initialTask);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   // Attachment tracking during edit
   const [attachmentsAddedDuringEdit, setAttachmentsAddedDuringEdit] = useState<
@@ -90,8 +82,6 @@ export function TaskDetailClient({
   // Save task with Server Action
   const handleSave = async () => {
     setSaving(true);
-    setError("");
-    setSuccess("");
 
     try {
       // Delete attachments marked for deletion during edit
@@ -120,17 +110,16 @@ export function TaskDetailClient({
       if (result.success) {
         setTask(form);
         setIsEditing(false);
-        setSuccess("Task updated successfully!");
-        setTimeout(() => setSuccess(""), 3000);
+        showSuccess("Task Updated", "Task updated successfully!");
         setAttachmentsAddedDuringEdit([]);
         setAttachmentsDeletedDuringEdit([]);
         router.refresh();
       } else {
-        setError(result.message || "Failed to save task");
+        showError("Save Failed", result.message || "Failed to save task");
       }
     } catch (err) {
       console.error("Error saving task:", err);
-      setError("Failed to save task");
+      showError("Error", "Failed to save task");
     } finally {
       setSaving(false);
     }
@@ -145,14 +134,15 @@ export function TaskDetailClient({
       const result = await deleteTaskAction(parseInt(taskId));
 
       if (result.success) {
+        showSuccess("Task Deleted", "Task deleted successfully");
         router.push("/tasks");
       } else {
-        setError(result.message || "Failed to delete task");
+        showError("Delete Failed", result.message || "Failed to delete task");
         setDeleting(false);
       }
     } catch (err) {
       console.error("Error deleting task:", err);
-      setError("Failed to delete task");
+      showError("Error", "Failed to delete task");
       setDeleting(false);
     }
   };
@@ -175,10 +165,9 @@ export function TaskDetailClient({
       ...task,
       attachments: originalAttachments,
     };
-    setTask(restoredTask);
     setForm(restoredTask);
+    setTask(restoredTask);
     setIsEditing(false);
-    setError("");
     setAttachmentsAddedDuringEdit([]);
     setAttachmentsDeletedDuringEdit([]);
   };
@@ -260,21 +249,6 @@ export function TaskDetailClient({
             )}
           </div>
         </div>
-
-        {/* Messages */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {success && (
-          <Alert variant="success" className="mb-6">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
 
         <Card className="p-6 shadow-soft-lg">
           {isEditing ? (

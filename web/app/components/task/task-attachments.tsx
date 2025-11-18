@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Paperclip, X, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Paperclip, X, Upload } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { uploadTaskAttachment, deleteTaskAttachment } from "@/lib/api";
 import type { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/context/ToastContext";
 
 interface TaskAttachmentsProps {
   task: Task;
@@ -29,15 +29,12 @@ export function TaskAttachments({
 }: TaskAttachmentsProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false); // UI state for drag feedback
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const { showSuccess, showError } = useToast();
 
   // Single helper used by BOTH input change and drop
   const uploadFile = async (file: File) => {
     try {
       setIsUploading(true);
-      setError("");
-      setSuccess("");
 
       const attachment = await uploadTaskAttachment(task.id, file);
 
@@ -56,9 +53,9 @@ export function TaskAttachments({
         attachments: [...(task.attachments || []), attachment as never],
       });
 
-      setSuccess(`${file.name} uploaded successfully`);
+      showSuccess("Upload Successful", `${file.name} uploaded successfully`);
     } catch (error: unknown) {
-      setError("Failed to upload file. Please try again.");
+      showError("Upload Failed", "Failed to upload file. Please try again.");
       console.error(error);
     } finally {
       setIsUploading(false);
@@ -113,9 +110,6 @@ export function TaskAttachments({
     e.stopPropagation();
 
     try {
-      setError("");
-      setSuccess("");
-
       if (!deferDeletions) {
         // Delete immediately if not deferring
         await deleteTaskAttachment(task.id, attachmentId);
@@ -131,9 +125,9 @@ export function TaskAttachments({
         attachments:
           task.attachments?.filter((a) => a.id !== attachmentId) || [],
       });
-      setSuccess("File deleted successfully");
+      showSuccess("File Deleted", "File deleted successfully");
     } catch (error) {
-      setError("Failed to delete file");
+      showError("Delete Failed", "Failed to delete file");
       console.error(error);
     }
   };
@@ -156,20 +150,6 @@ export function TaskAttachments({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {success && (
-          <Alert variant="success">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
-
         {isEditMode && (
           <div className="flex justify-center">
             <label

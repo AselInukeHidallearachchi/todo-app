@@ -4,22 +4,22 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { registerAction } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  AlertCircle,
   Loader,
   Eye,
   EyeOff,
   ArrowRight,
   CheckCircle2,
   Check,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+import { useActionToast } from "@/hooks/useActionToast";
 
 interface PasswordStrength {
   score: number;
@@ -76,12 +76,15 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  useEffect(() => {
-    if (state?.success) {
+  // Handle registration responses with toast
+  useActionToast(state, {
+    successTitle: "Account Created!",
+    successDescription: "Your account has been created successfully.",
+    onSuccess: () => {
       router.push("/");
       router.refresh();
-    }
-  }, [state, router]);
+    },
+  });
 
   const passwordStrength = getPasswordStrength(password);
   const isPasswordMatch = password && password === confirmPassword;
@@ -108,12 +111,6 @@ export default function RegisterPage() {
           </p>
         </div>
         <Card className="p-6 shadow-soft-xl border-border/40">
-          {state && !state.success && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{state.message}</AlertDescription>
-            </Alert>
-          )}
           <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-semibold">
@@ -234,7 +231,7 @@ export default function RegisterPage() {
                     </>
                   ) : (
                     <>
-                      <AlertCircle className="h-4 w-4" />
+                      <X className="h-4 w-4" />
                       Passwords do not match
                     </>
                   )}

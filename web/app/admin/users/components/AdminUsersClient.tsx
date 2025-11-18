@@ -6,19 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Shield,
-  User,
-  Loader2,
-  ArrowLeft,
-} from "lucide-react";
+import { Shield, User, Loader2, ArrowLeft } from "lucide-react";
 import {
   toggleUserRoleAction,
   toggleUserStatusAction,
 } from "@/app/actions/admin";
+import { useToast } from "@/context/ToastContext";
 
 /**
  * Client Component: Admin Users Management
@@ -45,16 +38,13 @@ export function AdminUsersClient({
 }: AdminUsersClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { showSuccess, showError } = useToast();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const toggleRole = async (user: User) => {
     const newRole = user.role === "admin" ? "user" : "admin";
     setUpdatingId(user.id);
-    setError("");
-    setSuccess("");
 
     try {
       const result = await toggleUserRoleAction(user.id, newRole);
@@ -64,19 +54,24 @@ export function AdminUsersClient({
         setUsers(
           users.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
         );
-        setSuccess(`${user.name}'s role updated to ${newRole}`);
-        setTimeout(() => setSuccess(""), 3000);
+        showSuccess(
+          "Role Updated",
+          `${user.name}'s role updated to ${newRole}`
+        );
 
         // Trigger server-side revalidation
         startTransition(() => {
           router.refresh();
         });
       } else {
-        setError(result.message || "Failed to update user role");
+        showError(
+          "Update Failed",
+          result.message || "Failed to update user role"
+        );
       }
     } catch (err) {
       console.error("Error updating role:", err);
-      setError("Failed to update user role");
+      showError("Error", "Failed to update user role");
     } finally {
       setUpdatingId(null);
     }
@@ -84,8 +79,6 @@ export function AdminUsersClient({
 
   const toggleActive = async (user: User) => {
     setUpdatingId(user.id);
-    setError("");
-    setSuccess("");
 
     try {
       const result = await toggleUserStatusAction(user.id);
@@ -97,19 +90,21 @@ export function AdminUsersClient({
             u.id === user.id ? { ...u, is_active: !u.is_active } : u
           )
         );
-        setSuccess(result.message);
-        setTimeout(() => setSuccess(""), 3000);
+        showSuccess("Status Updated", result.message);
 
         // Trigger server-side revalidation
         startTransition(() => {
           router.refresh();
         });
       } else {
-        setError(result.message || "Failed to toggle user status");
+        showError(
+          "Update Failed",
+          result.message || "Failed to toggle user status"
+        );
       }
     } catch (err) {
       console.error("Error toggling status:", err);
-      setError("Failed to toggle user status");
+      showError("Error", "Failed to toggle user status");
     } finally {
       setUpdatingId(null);
     }
@@ -148,22 +143,6 @@ export function AdminUsersClient({
             </div>
           </div>
         </div>
-
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Success Alert */}
-        {success && (
-          <Alert variant="success" className="mb-6">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
 
         {/* Users */}
         {users.length === 0 ? (

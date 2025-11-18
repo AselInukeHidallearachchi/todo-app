@@ -1,7 +1,9 @@
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/context/ToastContext";
 import "./globals.css";
 import { ReactNode } from "react";
+import { Toaster } from "sonner";
 
 export const metadata = {
   title: "TaskToDo - Manage Your Tasks Efficiently",
@@ -21,8 +23,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <main className="flex-1 container mx-auto p-4">{children}</main>
+          <ToastProvider>
+            <Navbar />
+            <main className="flex-1 container mx-auto p-4">{children}</main>
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              expand={false}
+            />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

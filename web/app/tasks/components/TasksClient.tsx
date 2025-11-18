@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Filter, Loader2 } from "lucide-react";
 import { deleteTaskAction } from "@/app/actions/tasks";
-import { toast } from "sonner";
 import { Task, PaginationMeta } from "@/types/task";
 import { useDebounce } from "@/hooks/useDebounce";
 import { UnifiedAlert } from "@/components/UnifiedAlert";
+import { useToast } from "@/context/ToastContext";
 
 interface TasksClientProps {
   initialTasks: Task[];
@@ -43,6 +43,7 @@ export function TasksClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { showSuccess, showError } = useToast();
 
   const [searchInput, setSearchInput] = useState(initialFilters.search);
 
@@ -124,7 +125,7 @@ export function TasksClient({
       const result = await deleteTaskAction(taskToDelete);
 
       if (result.success) {
-        toast.success("Task deleted successfully");
+        showSuccess("Task Deleted", "Task deleted successfully");
 
         // If last task on page, go to previous page
         if (initialTasks.length === 1 && initialPagination.current_page > 1) {
@@ -133,11 +134,11 @@ export function TasksClient({
           router.refresh();
         }
       } else {
-        toast.error(result.message || "Failed to delete task");
+        showError("Delete Failed", result.message || "Failed to delete task");
       }
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast.error("An error occurred while deleting the task");
+      showError("Error", "An error occurred while deleting the task");
     } finally {
       setDeleting(false);
       setDeleteOpen(false);

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -20,32 +19,22 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/context/ToastContext";
+import { useActionToast } from "@/hooks/useActionToast";
 
 /**
  * Client Component: New Task Form
- * Uses Next.js Server Actions for form submission (progressive enhancement)
+ * Uses Next.js Server Actions for form submission
  * Manages client-side form state and displays server response
  * Redirects to /tasks on successful creation
  */
 
-function SubmitButton({ disabled }: { disabled?: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      disabled={pending || disabled}
-      className="flex-1 shadow-soft-md hover:shadow-soft-lg transition-shadow"
-    >
-      {pending ? "Creating..." : "Create Task"}
-    </Button>
-  );
-}
-
 export function NewTaskClient() {
   const router = useRouter();
+  const { showWarning } = useToast();
+  const { pending } = useFormStatus();
 
   // Form state
   const [form, setForm] = useState({
@@ -59,15 +48,14 @@ export function NewTaskClient() {
   // Server Action state
   const [state, formAction] = useActionState(createTaskAction, null);
 
-  // Redirect on success
-  useEffect(() => {
-    if (state?.success) {
-      const timer = setTimeout(() => {
-        router.push("/tasks");
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [state?.success, router]);
+  // Handle server action responses with toast
+  useActionToast(state, {
+    successTitle: "Task Created!",
+    successDescription: "Your task has been created successfully.",
+    onSuccess: () => {
+      setTimeout(() => router.push("/tasks"), 1500);
+    },
+  });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -83,25 +71,17 @@ export function NewTaskClient() {
     setForm({ ...form, [name]: value });
   };
 
-  // Show success screen
-  if (state?.success) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8 text-center max-w-sm">
-          <div className="flex justify-center mb-4">
-            <CheckCircle2 className="h-16 w-16 text-success animate-bounce" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Task Created!</h2>
-          <p className="text-muted-foreground mb-4">
-            Your task has been created successfully.
-          </p>
-          <div className="text-sm text-muted-foreground">
-            Redirecting to tasks...
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  // Client-side validation
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!form.due_date) {
+      e.preventDefault();
+      showWarning(
+        "Due Date Required",
+        "Please select a due date for your task."
+      );
+      return;
+    }
+  };
 
   return (
     <div className="animate-fade-in">
@@ -124,14 +104,11 @@ export function NewTaskClient() {
         </div>
 
         <Card className="p-6 shadow-soft-lg">
-          {state?.success === false && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{state.message}</AlertDescription>
-            </Alert>
-          )}
-
-          <form action={formAction} className="space-y-6">
+          <form
+            action={formAction}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
             {/* Hidden inputs for form state */}
             <input type="hidden" name="status" value={form.status} />
             <input type="hidden" name="priority" value={form.priority} />
@@ -242,7 +219,7 @@ export function NewTaskClient() {
             {/* Due Date */}
             <div className="space-y-2">
               <Label htmlFor="due_date" className="text-sm font-semibold">
-                Due Date
+                Due Date *
               </Label>
               <DatePicker
                 value={form.due_date}
@@ -261,7 +238,7 @@ export function NewTaskClient() {
                         day: "numeric",
                       }
                     )}`
-                  : "Optional"}
+                  : "Required field"}
               </p>
             </div>
 
@@ -307,7 +284,13 @@ export function NewTaskClient() {
               >
                 Cancel
               </Button>
-              <SubmitButton disabled={!form.title.trim()} />
+              <Button
+                type="submit"
+                disabled={pending || !form.title.trim()}
+                className="flex-1 shadow-soft-md hover:shadow-soft-lg transition-shadow"
+              >
+                {pending ? "Creating..." : "Create Task"}
+              </Button>
             </div>
           </form>
         </Card>
