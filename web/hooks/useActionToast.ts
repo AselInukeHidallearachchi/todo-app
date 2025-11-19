@@ -11,6 +11,7 @@ interface ActionResponse {
 interface UseActionToastOptions {
   onSuccess?: () => void;
   onError?: () => void;
+  skipSuccessToast?: boolean;
   successTitle?: string;
   errorTitle?: string;
   successDescription?: string;
@@ -34,12 +35,14 @@ export function useActionToast(
     if (state && state !== lastProcessedState.current) {
       lastProcessedState.current = state;
       if (state?.success === true) {
-        showSuccess(
-          options?.successTitle || "Success",
-          options?.successDescription ||
-            state.message ||
-            "Operation completed successfully"
-        );
+        if (!options?.skipSuccessToast) {
+          showSuccess(
+            options?.successTitle || "Success",
+            options?.successDescription ||
+              state.message ||
+              "Operation completed successfully"
+          );
+        }
 
         options?.onSuccess?.();
       } else if (state?.success === false && state?.message) {

@@ -27,7 +27,7 @@ export default function RootLayout({
             <Navbar />
             <main className="flex-1 container mx-auto p-4">{children}</main>
             <Toaster
-              position="top-right"
+              position="bottom-right"
               richColors
               closeButton
               expand={false}

@@ -52,8 +52,7 @@ export default function LoginPage() {
 
   // Skip success toast to make login feel faster
   useActionToast(state, {
-    successTitle: "Login Successful!",
-    successDescription: "Welcome back.",
+    skipSuccessToast: true,
     onSuccess: () => {
       router.push("/");
       router.refresh();
