@@ -18,19 +18,19 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const showSuccess = (message: string, description?: string) => {
-    toast.success(message, { description });
+    toast.success(message, { description, position: "bottom-right" });
   };
 
   const showError = (message: string, description?: string) => {
-    toast.error(message, { description });
+    toast.error(message, { description, position: "bottom-right" });
   };
 
   const showWarning = (message: string, description?: string) => {
-    toast.warning(message, { description });
+    toast.warning(message, { description, position: "bottom-right" });
   };
 
   const showInfo = (message: string, description?: string) => {
-    toast.info(message, { description });
+    toast.info(message, { description, position: "bottom-right" });
   };
 
   // Helper to handle server action responses
