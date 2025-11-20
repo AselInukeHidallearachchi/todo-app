@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, User, Loader2, ArrowLeft } from "lucide-react";
+import { Shield, User, Loader, ArrowLeft } from "lucide-react";
 import {
   toggleUserRoleAction,
   toggleUserStatusAction,
@@ -215,7 +215,7 @@ export function AdminUsersClient({
                     {/* Status */}
                     <div className="flex items-center gap-2">
                       {updatingId === user.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
                         <Switch
                           checked={user.is_active}
@@ -244,7 +244,7 @@ export function AdminUsersClient({
                       >
                         {updatingId === user.id ? (
                           <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader className="h-3.5 w-3.5 animate-spin" />
                             Updating...
                           </>
                         ) : (
@@ -289,7 +289,7 @@ export function AdminUsersClient({
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-2">
                         {updatingId === user.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
                         ) : (
                           <Switch
                             checked={user.is_active}
@@ -314,7 +314,7 @@ export function AdminUsersClient({
                         variant={user.role === "admin" ? "outline" : "default"}
                       >
                         {updatingId === user.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader className="h-3.5 w-3.5 animate-spin" />
                         ) : user.role === "admin" ? (
                           "Make User"
                         ) : (

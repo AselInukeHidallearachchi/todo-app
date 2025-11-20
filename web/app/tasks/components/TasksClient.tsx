@@ -14,13 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, Loader2 } from "lucide-react";
+import { Filter } from "lucide-react";
 import { deleteTaskAction } from "@/app/actions/tasks";
 import { Task, PaginationMeta } from "@/types/task";
 import { useDebounce } from "@/hooks/useDebounce";
 import { UnifiedAlert } from "@/components/UnifiedAlert";
 import { useToast } from "@/context/ToastContext";
-
+import Loading from "@/app/loading";
 interface TasksClientProps {
   initialTasks: Task[];
   initialPagination: PaginationMeta;
@@ -221,12 +221,7 @@ export function TasksClient({
         </div>
       </div>
 
-      {/* 4. Loading State */}
-      {isPending && (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
+      {isPending && <Loading />}
 
       {/* 5. Tasks Grid or Empty State */}
       {!isPending && (

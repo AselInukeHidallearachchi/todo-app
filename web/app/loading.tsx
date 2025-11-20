@@ -7,7 +7,7 @@ export default function Loading() {
         <div className="inline-block p-4 rounded-full bg-primary/10 mb-4">
           <Sparkles className="h-8 w-8 text-primary animate-spin" />
         </div>
-        <p className="text-muted-foreground">Loading dashboard...</p>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     </div>
   );

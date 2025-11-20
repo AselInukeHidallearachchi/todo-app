@@ -29,7 +29,7 @@ export async function apiServer<T = unknown>(
   const response = await fetch(url, {
     ...options,
     headers,
-    cache: options.cache || "no-store", // Default to no caching for data freshness
+    cache: options.cache !== undefined ? options.cache : "force-cache", // Cache by default for performance
   });
 
   if (!response.ok) {
