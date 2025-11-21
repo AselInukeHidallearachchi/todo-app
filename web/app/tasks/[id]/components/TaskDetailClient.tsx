@@ -105,7 +105,7 @@ export function TaskDetailClient({
         formData.append("due_date", form.due_date);
       }
 
-      const result = await updateTaskAction(parseInt(taskId), null, formData);
+      const result = await updateTaskAction(parseInt(taskId), formData);
 
       if (result.success) {
         setTask(form);
