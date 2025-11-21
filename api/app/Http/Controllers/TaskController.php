@@ -12,7 +12,8 @@ use App\Http\Requests\CreateTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\AttachmentService;
-
+use App\Http\Resources\TaskResource;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -122,5 +123,55 @@ class TaskController extends Controller
         abort_unless($attachment->task_id === $task->id, 403);
         $this->attachmentService->deleteAttachment($attachment);
         return ApiResponse::success(null, 'Attachment deleted successfully');
+    }
+
+    /**
+     * Create task with attachments in single request
+     */
+    public function createWithAttachments(Request $request): JsonResponse
+    {
+        try
+        {
+           $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'status' => 'required|in:todo,in_progress,completed',
+            'priority' => 'required|in:low,medium,high,urgent',
+            'due_date' => 'required|date|after_or_equal:today',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|max:10240|mimes:jpeg,png,pdf,doc,docx,xls,xlsx,txt'
+           ]);
+
+           $task = DB::transaction(function() use ($validated, $request) {
+            $task = Task::create([
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? '',
+                'status' => $validated['status'],
+                'priority' => $validated['priority'],
+                'due_date' => $validated['due_date'],
+                'user_id' => auth()->user()->id,
+            ]);
+
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $attachment = $this->attachmentService->uploadAttachment($task, $file);
+                    $task->attachments()->save($attachment);
+                }
+            }
+
+            return $task;
+           });
+
+           $task->load('attachments.uploader:id,name');
+
+            return ApiResponse::created(
+            new TaskResource($task),
+            'Task created with attachments successfully'
+        );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
+        } catch (\Exception $e) {
+            return ApiResponse::serverError('Failed to create task', $e->getMessage());
+        }
     }
 }

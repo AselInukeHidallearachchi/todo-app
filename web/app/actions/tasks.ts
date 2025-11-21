@@ -12,6 +12,10 @@ interface ActionResponse<T = unknown> {
   errors?: Record<string, string[]>;
 }
 
+/**
+ * No longer used - createTaskWithAttachments is handled client-side
+ * Kept for reference if you need it
+ */
 export async function createTaskAction(
   prevState: unknown,
   formData: FormData
@@ -23,27 +27,20 @@ export async function createTaskAction(
     const priority = formData.get("priority") as string;
     const due_date = formData.get("due_date") as string;
 
-    // Validation
     if (!title?.trim()) {
-      return {
-        success: false,
-        message: "Title is required",
-      };
+      return { success: false, message: "Title is required" };
     }
 
     if (!due_date) {
-      return {
-        success: false,
-        message: "Due date is required",
-      };
+      return { success: false, message: "Due date is required" };
     }
 
     const taskData = {
       title: title.trim(),
       description: description?.trim() || "",
-      due_date: due_date || null,
-      status: status || "todo",
-      priority: priority || "medium",
+      due_date,
+      status,
+      priority,
     };
 
     const response = await serverApi.post<{ success: boolean; data: Task }>(
@@ -51,14 +48,10 @@ export async function createTaskAction(
       taskData
     );
 
-    // Revalidate the tasks list
     revalidatePath("/tasks");
     revalidatePath("/");
 
-    return {
-      success: true,
-      data: response.data,
-    };
+    return { success: true, data: response.data };
   } catch (error) {
     console.error("Create task error:", error);
     return {

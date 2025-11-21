@@ -19,6 +19,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/auth/logout', [AuthController::class, 'logout']);
             Route::apiResource('tasks', TaskController::class);
             Route::get('/tasks-statistics', [TaskController::class, 'statistics']);
+             Route::post(
+            '/tasks/create-with-attachments',
+            [TaskController::class, 'createWithAttachments']
+        );
 
             //Attachment routes
             Route::get('/tasks/{task}/attachments', [TaskController::class, 'indexAttachments']);
