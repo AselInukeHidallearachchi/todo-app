@@ -41,7 +41,7 @@ export async function deleteTaskAction(
       };
     }
 
-    const response = await fetch(`${getApiBaseUrl()}/v1/tasks/${taskId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/tasks/${taskId}`, {
       method: "DELETE",
       headers: {
         Accept: "application/json",
@@ -104,7 +104,7 @@ export async function updateTaskAction(
       };
     }
 
-    const response = await fetch(`${getApiBaseUrl()}/v1/tasks/${taskId}`, {
+    const response = await fetch(`${getApiBaseUrl()}/tasks/${taskId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -178,7 +178,7 @@ export async function createTaskAction(
       };
     }
 
-    const response = await fetch(`${getApiBaseUrl()}/v1/tasks`, {
+    const response = await fetch(`${getApiBaseUrl()}/tasks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
