@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, CheckCircle2, Save, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Edit } from "lucide-react";
 import { UnifiedAlert } from "@/components/UnifiedAlert";
 import { TaskAttachments } from "@/app/components/task/task-attachments";
 import { deleteTaskAttachment } from "@/lib/api";

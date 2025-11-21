@@ -54,21 +54,32 @@ api.interceptors.response.use(
   }
 );
 
+// Define the response type for attachment upload
+interface AttachmentUploadResponse {
+  success: boolean;
+  message: string;
+  data: unknown;
+}
+
 // File upload helper function
 export const uploadTaskAttachment = async (
   taskId: number,
   file: File
-): Promise<any> => {
+): Promise<unknown> => {
   const token = localStorage.getItem("token");
   const formData = new FormData();
   formData.append("file", file, file.name);
 
-  const response = await api.post(`/tasks/${taskId}/attachments`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await api.post<AttachmentUploadResponse>(
+    `/tasks/${taskId}/attachments`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 
   // Backend returns: { success, message, data: Attachment }
   return response.data?.data || response.data;

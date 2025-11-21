@@ -18,6 +18,7 @@ export interface DatePickerProps {
   minDate?: string;
   maxDate?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function DatePicker({
@@ -27,6 +28,7 @@ export function DatePicker({
   minDate,
   maxDate,
   className,
+  disabled = false,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -65,6 +67,7 @@ export function DatePicker({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          disabled={disabled}
           className={cn(
             "w-full justify-between font-normal",
             !value && "text-muted-foreground",

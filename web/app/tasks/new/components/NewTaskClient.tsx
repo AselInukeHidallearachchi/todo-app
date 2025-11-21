@@ -22,7 +22,6 @@ import { ArrowLeft, Paperclip, X, Upload } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import Loading from "@/app/loading";
-import type { Task } from "@/types/task";
 
 /**
  * Single-Phase Task Creation with Attachments
@@ -477,7 +476,7 @@ export function NewTaskClient() {
                       </Badge>
                     )}
                     {attachments.length > 0 && (
-                      <Badge variant="secondary">
+                      <Badge variant="outline">
                         <Paperclip className="h-3 w-3 mr-1" />
                         {attachments.length} file
                         {attachments.length !== 1 ? "s" : ""}
