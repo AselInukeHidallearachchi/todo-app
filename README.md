@@ -2,6 +2,17 @@
 
 A full-stack task management application built with Laravel (API) and Next.js (Frontend), containerized with Docker for easy deployment.
 
+## 🎯 Interview Preparation Materials
+
+**Preparing for backend developer interviews?** This repository includes comprehensive interview preparation documentation:
+
+- 📚 **[START_HERE.md](START_HERE.md)** - Begin your interview prep journey here!
+- 📖 **[INTERVIEW_PREP.md](INTERVIEW_PREP.md)** - Complete guide covering Laravel, Next.js, Docker (1,594 lines)
+- ⚡ **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Cheat sheet with commands, API endpoints, and quick answers (624 lines)
+- 📋 **[DOCUMENTATION_SUMMARY.md](DOCUMENTATION_SUMMARY.md)** - Overview of all documentation
+
+**Total: 2,700+ lines of comprehensive interview preparation material covering what you built, how you built it, and how to discuss it in interviews.**
+
 ## 📋 Overview
 
 This is a modern todo application that allows users to create, manage, and track their tasks efficiently. The application features user authentication, role-based access control (admin/user), task prioritization, due dates, file attachments, and comprehensive task statistics.
