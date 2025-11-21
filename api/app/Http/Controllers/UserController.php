@@ -7,11 +7,18 @@ use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Responses\ApiResponse;
+use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    protected UserService $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
     // List all users (admin only)
     public function index(): JsonResponse
     {
@@ -54,8 +61,15 @@ class UserController extends Controller
     // Delete user (admin only)
     public function destroy(User $user): JsonResponse
     {
-        $user->delete();
-        return ApiResponse::success(null, 'User deleted successfully');
+        try {
+            // Ensure we're not deleting the last admin
+            $this->userService->ensureAdminBeforeDelete($user);
+
+            $user->delete();
+            return ApiResponse::success(null, 'User deleted successfully');
+        } catch (\Exception $e) {
+            return ApiResponse::forbidden($e->getMessage());
+        }
     }
 
     // Change user role/status (admin only)
@@ -66,32 +80,50 @@ class UserController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $user->update($validated);
-        return ApiResponse::success(
-            new UserResource($user),
-            'User role updated successfully'
-        );
+        try {
+            // If changing role, ensure we're not removing the last admin
+            if (isset($validated['role'])) {
+                $this->userService->ensureAtLeastOneAdmin($user, $validated['role']);
+            }
+
+            $user->update($validated);
+            return ApiResponse::success(
+                new UserResource($user),
+                'User role updated successfully'
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::forbidden($e->getMessage());
+        }
     }
 
     public function toggleActive(Request $request, User $user): JsonResponse
     {
-        // Optional: Prevent admin from deactivating self
+        // Prevent admin from deactivating self
         if ($user->id === $request->user()->id) {
             return ApiResponse::forbidden('You cannot deactivate your own account');
         }
 
-        // Flip the boolean
-        $user->is_active = !$user->is_active;
-        $user->save();
+        try {
+            // If deactivating, ensure we're not deactivating the last active admin
+            if ($user->is_active) {
+                $this->userService->ensureActiveAdminBeforeDeactivate($user);
+            }
 
-        $message = $user->is_active
-            ? "{$user->name} has been activated"
-            : "{$user->name} has been deactivated";
+            // Flip the boolean
+            $user->is_active = !$user->is_active;
+            $user->save();
 
-        return ApiResponse::success(
-            new UserResource($user->refresh()),
-            $message
-        );
+            $message = $user->is_active
+                ? "{$user->name} has been activated"
+                : "{$user->name} has been deactivated";
+
+            return ApiResponse::success(
+                new UserResource($user->refresh()),
+                $message
+            );
+        } catch (\Exception $e) {
+            return ApiResponse::forbidden($e->getMessage());
+        }
     }
     public function getPreferences(Request $request): JsonResponse
     {
