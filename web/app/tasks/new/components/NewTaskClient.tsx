@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
-import { createTaskWithAttachments } from "@/lib/api";
+import { createTaskWithAttachmentsAction } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +132,7 @@ export function NewTaskClient() {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Submit handler - create task with attachments in one request
+  // Submit handler - create task with attachments using Server Action
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -150,17 +150,27 @@ export function NewTaskClient() {
     setIsLoading(true);
 
     try {
-      // Create task with attachments in single request
-      await createTaskWithAttachments(
-        {
-          title: form.title.trim(),
-          description: form.description.trim(),
-          status: form.status,
-          priority: form.priority,
-          due_date: form.due_date,
-        },
-        attachments
-      );
+      // Create FormData for server action
+      const formData = new FormData();
+      formData.append("title", form.title.trim());
+      formData.append("description", form.description.trim());
+      formData.append("status", form.status);
+      formData.append("priority", form.priority);
+      formData.append("due_date", form.due_date);
+
+      // Add files
+      attachments.forEach((file) => {
+        formData.append("attachments[]", file);
+      });
+
+      // Call server action
+      const result = await createTaskWithAttachmentsAction(formData);
+
+      if (!result.success) {
+        showError("Creation Failed", result.message || "Failed to create task");
+        setIsLoading(false);
+        return;
+      }
 
       showSuccess(
         "Task Created!",
@@ -170,7 +180,9 @@ export function NewTaskClient() {
       );
 
       setIsRedirecting(true);
-      router.push(`/tasks`);
+
+      // Navigate to tasks page - server action already revalidated the path
+      router.replace("/tasks");
     } catch (error) {
       console.error("Create task error:", error);
       showError(

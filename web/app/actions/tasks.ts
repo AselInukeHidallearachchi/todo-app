@@ -57,8 +57,9 @@ export async function deleteTaskAction(
       };
     }
 
-    // Revalidate the tasks page to reflect the deletion
+    // Revalidate the tasks page and dashboard to reflect the deletion
     revalidatePath("/tasks");
+    revalidatePath("/");
 
     return {
       success: true,
@@ -130,9 +131,10 @@ export async function updateTaskAction(
 
     const data = await response.json();
 
-    // Revalidate the tasks page and the specific task page
+    // Revalidate the tasks page, specific task page, and dashboard
     revalidatePath("/tasks");
     revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/");
 
     return {
       success: true,
@@ -204,8 +206,9 @@ export async function createTaskAction(
 
     const data = await response.json();
 
-    // Revalidate the tasks page
+    // Revalidate the tasks page and dashboard
     revalidatePath("/tasks");
+    revalidatePath("/");
 
     return {
       success: true,
@@ -214,6 +217,72 @@ export async function createTaskAction(
     };
   } catch (error) {
     console.error("Create task error:", error);
+    return {
+      success: false,
+      message: "An unexpected error occurred while creating the task",
+    };
+  }
+}
+
+/**
+ * Create a new task with attachments
+ */
+export async function createTaskWithAttachmentsAction(
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const token = await getAuthToken();
+
+    if (!token) {
+      return {
+        success: false,
+        message: "Unauthorized. Please log in again.",
+      };
+    }
+
+    // Validation
+    const title = formData.get("title") as string;
+    if (!title) {
+      return {
+        success: false,
+        message: "Title is required",
+      };
+    }
+
+    const response = await fetch(
+      `${getApiBaseUrl()}/tasks/create-with-attachments`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          // Don't set Content-Type for FormData - browser will set it with boundary
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      return {
+        success: false,
+        message: error.message || "Failed to create task",
+      };
+    }
+
+    const data = await response.json();
+
+    // Revalidate the tasks page and dashboard to show new task
+    revalidatePath("/tasks");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: "Task created successfully",
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Create task with attachments error:", error);
     return {
       success: false,
       message: "An unexpected error occurred while creating the task",
