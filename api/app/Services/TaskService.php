@@ -9,7 +9,6 @@ use App\Models\User;
 class TaskService
 {
     /**
-     * Get tasks based on user's role with attachments
      * Admin sees all tasks, regular users see only their tasks
      */
     public function getAllTasks(User $user, array $filters=[])
@@ -31,7 +30,7 @@ class TaskService
             $query->where('priority', $filters['priority']);
         }
 
-        //Search filter 
+        //Search filter
         if(!empty($filters['search'])){
             $search = trim($filters['search']);
             $query->where('title','like',"%{$search}%");
@@ -59,9 +58,7 @@ class TaskService
         return $query->paginate($perPage,['*'],'page',$page);
     }
 
-    /**
-     * Create a new task for a user
-     */
+
     public function createTask(array $data, User $user): Task
     {
          // Default values for missing fields
@@ -72,17 +69,13 @@ class TaskService
         return Task::create($data);
     }
 
-    /**
-     * Get a specific task by ID with its attachments
-     */
+
     public function getTask(int $taskId): Task
     {
         return Task::with('attachments.uploader')->findOrFail($taskId);
     }
 
-    /**
-     * Update task details
-     */
+
     public function updateTask(array $data, int $taskId): Task
     {
         $task = Task::findOrFail($taskId);
@@ -90,9 +83,7 @@ class TaskService
         return $task;
     }
 
-    /**
-     * Remove a task from the system
-     */
+
     public function deleteTask(int $taskId): bool
     {
         $task = Task::findOrFail($taskId);
@@ -100,13 +91,12 @@ class TaskService
     }
 
     /**
-     * Get task statistics for a user
-     * Optimized with single query using groupBy
+     * Get task statistics for a user with single query using groupBy
      */
     public function getTaskStatistics(User $user): array
     {
         $query = Task::query();
-        
+
         // Admin sees all tasks, regular users see only their tasks
         if (!$user->isAdmin()) {
             $query->where('user_id', $user->id);
