@@ -1,4 +1,3 @@
-import { TaskStatsResponse } from "@/types/api";
 import axios from "axios";
 
 // Types for API responses
@@ -48,56 +47,21 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      // Only redirect if we're not in the middle of a file upload
+      // Check if the request was for file upload
+      const isFileUpload = error.config?.headers?.["Content-Type"]?.includes(
+        "multipart/form-data"
+      );
+      if (!isFileUpload) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
 );
 
-// Define the response type for attachment upload
-interface AttachmentUploadResponse {
-  success: boolean;
-  message: string;
-  data: unknown;
-}
-
-// File upload helper function
-export const uploadTaskAttachment = async (
-  taskId: number,
-  file: File
-): Promise<unknown> => {
-  const token = localStorage.getItem("token");
-  const formData = new FormData();
-  formData.append("file", file, file.name);
-
-  const response = await api.post<AttachmentUploadResponse>(
-    `/tasks/${taskId}/attachments`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-
-  // Backend returns: { success, message, data: Attachment }
-  return response.data?.data || response.data;
-};
-
-// Delete attachment helper function
-export const deleteTaskAttachment = async (
-  taskId: number,
-  attachmentId: number
-) => {
-  await api.delete(`/tasks/${taskId}/attachments/${attachmentId}`);
-};
-
-// Fetch task statistics for the logged-in user
-export const fetchTaskStatistics = async (): Promise<TaskStats> => {
-  const response = await api.get<TaskStatsResponse>("/tasks-statistics");
-  return response.data.data;
-};
+// NOTE: File upload and deletion now handled by Server Actions in /app/actions/tasks.ts
+// These functions provide better authentication with HTTP-only cookies
 
 // Small typed helpers for consistent API usage across the app.
 export const get = async <T = unknown>(url: string) => {

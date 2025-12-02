@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Paperclip, X, Upload } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { uploadTaskAttachment, deleteTaskAttachment } from "@/lib/api";
-import type { Task } from "@/types/task";
+import {
+  uploadTaskAttachmentAction,
+  deleteTaskAttachmentAction,
+} from "@/app/actions/tasks";
+import type { Task, Attachment } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/context/ToastContext";
@@ -14,7 +17,7 @@ interface TaskAttachmentsProps {
   task: Task;
   onUpdate: (task: Task) => void;
   isEditMode?: boolean;
-  onAttachmentAdded?: (attachmentId: number) => void;
+  onAttachmentAdded?: (attachment: Attachment) => void;
   onAttachmentDeleted?: (attachmentId: number) => void;
   deferDeletions?: boolean; // If true, don't delete immediately, just notify parent
 }
@@ -36,24 +39,34 @@ export function TaskAttachments({
     try {
       setIsUploading(true);
 
-      const attachment = await uploadTaskAttachment(task.id, file);
+      // Create FormData for the server action
+      const formData = new FormData();
+      formData.append("file", file);
 
-      // Notify parent component of the new attachment ID for tracking
-      if (
-        onAttachmentAdded &&
-        attachment &&
-        typeof attachment === "object" &&
-        "id" in attachment
-      ) {
-        onAttachmentAdded((attachment as { id: number }).id);
+      const result = await uploadTaskAttachmentAction(task.id, formData);
+
+      if (result.success && result.data) {
+        // Notify parent component with the full attachment object for tracking
+        if (onAttachmentAdded && result.data) {
+          onAttachmentAdded(result.data as Attachment);
+        }
+
+        // The task will be updated when user clicks Save
+        if (!isEditMode) {
+          // Only update task if NOT in edit mode (view mode)
+          onUpdate({
+            ...task,
+            attachments: [...(task.attachments || []), result.data as never],
+          });
+        }
+
+        showSuccess("Upload Successful", `${file.name} uploaded successfully`);
+      } else {
+        showError(
+          "Upload Failed",
+          result.message || "Failed to upload file. Please try again."
+        );
       }
-
-      onUpdate({
-        ...task,
-        attachments: [...(task.attachments || []), attachment as never],
-      });
-
-      showSuccess("Upload Successful", `${file.name} uploaded successfully`);
     } catch (error: unknown) {
       showError("Upload Failed", "Failed to upload file. Please try again.");
       console.error(error);
@@ -62,7 +75,7 @@ export function TaskAttachments({
     }
   };
 
-  //  Click-to-upload path (unchanged behavior, now reuses helper)
+  //  Click-to-upload path
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     await uploadFile(e.target.files[0]);
@@ -70,7 +83,7 @@ export function TaskAttachments({
     e.target.value = "";
   };
 
-  // Native drag & drop handlers (new)
+  // Native drag & drop handlers
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -98,7 +111,6 @@ export function TaskAttachments({
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    // (Optional) add type/size checks here if you want parity with FileUpload
     await uploadFile(file);
   };
 
@@ -112,7 +124,11 @@ export function TaskAttachments({
     try {
       if (!deferDeletions) {
         // Delete immediately if not deferring
-        await deleteTaskAttachment(task.id, attachmentId);
+        const result = await deleteTaskAttachmentAction(task.id, attachmentId);
+        if (!result.success) {
+          showError("Delete Failed", result.message || "Failed to delete file");
+          return;
+        }
       }
 
       // Notify parent component of the deleted attachment for tracking
@@ -120,11 +136,17 @@ export function TaskAttachments({
         onAttachmentDeleted(attachmentId);
       }
 
-      onUpdate({
-        ...task,
-        attachments:
-          task.attachments?.filter((a) => a.id !== attachmentId) || [],
-      });
+      // In edit mode, only notify parent about deletion, don't update the full task
+      // The task will be updated when user clicks Save
+      if (!isEditMode) {
+        // Only update task if NOT in edit mode (view mode)
+        onUpdate({
+          ...task,
+          attachments:
+            task.attachments?.filter((a) => a.id !== attachmentId) || [],
+        });
+      }
+
       showSuccess("File Deleted", "File deleted successfully");
     } catch (error) {
       showError("Delete Failed", "Failed to delete file");

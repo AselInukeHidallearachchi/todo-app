@@ -20,9 +20,12 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Save, Trash2, Edit } from "lucide-react";
 import { UnifiedAlert } from "@/components/UnifiedAlert";
 import { TaskAttachments } from "@/app/components/task/task-attachments";
-import { deleteTaskAttachment } from "@/lib/api";
-import { updateTaskAction, deleteTaskAction } from "@/app/actions/tasks";
-import type { Task } from "@/types/task";
+import {
+  updateTaskAction,
+  deleteTaskAction,
+  deleteTaskAttachmentAction,
+} from "@/app/actions/tasks";
+import type { Task, Attachment } from "@/types/task";
 import { useToast } from "@/context/ToastContext";
 
 /**
@@ -52,7 +55,7 @@ export function TaskDetailClient({
 
   // Attachment tracking during edit
   const [attachmentsAddedDuringEdit, setAttachmentsAddedDuringEdit] = useState<
-    number[]
+    Attachment[]
   >([]);
   const [attachmentsDeletedDuringEdit, setAttachmentsDeletedDuringEdit] =
     useState<number[]>([]);
@@ -79,8 +82,9 @@ export function TaskDetailClient({
     setForm({ ...form, [name]: value });
   };
 
-  // Save task with Server Action
+  // Save task with Server Action - original behavior
   const handleSave = async () => {
+    console.log("[TaskDetailClient] handleSave called");
     setSaving(true);
 
     try {
@@ -88,9 +92,21 @@ export function TaskDetailClient({
       if (attachmentsDeletedDuringEdit.length > 0) {
         for (const attachmentId of attachmentsDeletedDuringEdit) {
           try {
-            await deleteTaskAttachment(task.id, attachmentId);
+            const result = await deleteTaskAttachmentAction(
+              task.id,
+              attachmentId
+            );
+            if (!result.success) {
+              console.warn(
+                `Delete attachment ${attachmentId} returned error: ${result.message}. This might be okay if it was already deleted.`
+              );
+            }
           } catch (err) {
-            console.error(`Failed to delete attachment ${attachmentId}:`, err);
+            console.warn(
+              `Exception deleting attachment ${attachmentId}:`,
+              err,
+              ". Continuing with save."
+            );
           }
         }
       }
@@ -108,7 +124,17 @@ export function TaskDetailClient({
       const result = await updateTaskAction(parseInt(taskId), formData);
 
       if (result.success) {
-        setTask(form);
+        // Update local task state with newly added attachments (old ones removed)
+        const updatedTask = {
+          ...form,
+          attachments: [
+            ...(form.attachments?.filter(
+              (a) => !attachmentsDeletedDuringEdit.includes(a.id)
+            ) || []),
+            ...attachmentsAddedDuringEdit,
+          ],
+        };
+        setTask(updatedTask);
         setIsEditing(false);
         showSuccess("Task Updated", "Task updated successfully!");
         setAttachmentsAddedDuringEdit([]);
@@ -149,18 +175,27 @@ export function TaskDetailClient({
 
   // Cancel edit and restore original state
   const handleCancel = async () => {
-    // Delete any attachments added during this edit session
+    // Delete any attachments added during this edit session since we're canceling
     if (attachmentsAddedDuringEdit.length > 0) {
-      for (const attachmentId of attachmentsAddedDuringEdit) {
+      for (const attachment of attachmentsAddedDuringEdit) {
         try {
-          await deleteTaskAttachment(task.id, attachmentId);
+          const result = await deleteTaskAttachmentAction(
+            task.id,
+            attachment.id
+          );
+          if (!result.success) {
+            console.error(
+              `Failed to delete attachment ${attachment.id}:`,
+              result.message
+            );
+          }
         } catch (err) {
-          console.error(`Failed to delete attachment ${attachmentId}:`, err);
+          console.error(`Failed to delete attachment ${attachment.id}:`, err);
         }
       }
     }
 
-    // Restore original state
+    // Restore original state - including original attachments
     const restoredTask = {
       ...task,
       attachments: originalAttachments,
@@ -393,17 +428,29 @@ export function TaskDetailClient({
               {/* Attachments Section */}
               {!saving && (
                 <TaskAttachments
-                  task={task}
+                  task={{
+                    ...task,
+                    attachments: [
+                      ...(task.attachments?.filter(
+                        (a) => !attachmentsDeletedDuringEdit.includes(a.id)
+                      ) || []),
+                      ...attachmentsAddedDuringEdit,
+                    ],
+                  }}
                   onUpdate={(updatedTask) => {
+                    console.log(
+                      "[TaskDetailClient] TaskAttachments onUpdate called with task:",
+                      updatedTask.id
+                    );
                     setTask(updatedTask);
                     setForm(updatedTask);
                   }}
                   isEditMode={true}
                   deferDeletions={true}
-                  onAttachmentAdded={(attachmentId) => {
+                  onAttachmentAdded={(attachment) => {
                     setAttachmentsAddedDuringEdit([
                       ...attachmentsAddedDuringEdit,
-                      attachmentId,
+                      attachment,
                     ]);
                   }}
                   onAttachmentDeleted={(attachmentId) => {
