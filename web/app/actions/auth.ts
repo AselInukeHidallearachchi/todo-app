@@ -27,10 +27,10 @@ interface ActionResponse<T = unknown> {
 }
 
 const getApiBaseUrl = () => {
-  return (
+  const baseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-    "http://localhost:8000"
-  );
+    "http://localhost:8000/api/v1";
+  return baseUrl;
 };
 
 export async function loginAction(
