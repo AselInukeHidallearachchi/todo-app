@@ -502,14 +502,7 @@ export function NewTaskClient() {
                   disabled={isLoading || isRedirecting || !form.title.trim()}
                   className="flex-1 shadow-soft-md hover:shadow-soft-lg transition-shadow"
                 >
-                  {isLoading || isRedirecting ? (
-                    <>
-                      <Loading />
-                      {isRedirecting ? "Redirecting..." : "Creating..."}
-                    </>
-                  ) : (
-                    `Create Task`
-                  )}
+                  Create Task
                 </Button>
               </div>
             </form>
