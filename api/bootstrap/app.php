@@ -19,5 +19,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('tasks:send-digests')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle authentication exceptions for API requests
+        $exceptions->render(function (Illuminate\Auth\AuthenticationException $e, Illuminate\Http\Request $request) {
+            // For API routes, return JSON response instead of redirecting
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('v1/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated. Please log in.',
+                    'error' => 'authentication_required'
+                ], 401);
+            }
+
+            return null; // Let Laravel handle it normally for other requests
+        });
     })->create();
